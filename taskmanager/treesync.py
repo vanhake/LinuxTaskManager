@@ -22,7 +22,7 @@ class TreeSync:
 
     def sync(self, rows):
         """rows: Liste von (key, parent_key|None, values); Eltern vor Kindern."""
-        desired = {k: p for k, p, _ in rows}
+        desired = {k: p for k, p, _x in rows}
         for k in list(self.iters):
             if k in self.iters and (k not in desired or desired[k] != self.parent[k]):
                 self._remove(k)

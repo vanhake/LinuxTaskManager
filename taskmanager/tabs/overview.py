@@ -1,5 +1,7 @@
 """Startseite „Übersicht“: Dashboard mit allen wichtigen Werten auf einen Blick."""
 
+from ..i18n import _
+
 import time
 
 import psutil
@@ -9,8 +11,8 @@ from .. import icons, sysinfo, util
 from ..widgets import Graph, RingGauge, UsageBar, card, set_text, styled_label
 from . import Tab
 
-STATUS_DE = {"Charging": "Wird geladen", "Discharging": "Entlädt", "Full": "Voll",
-             "Not charging": "Netzbetrieb", "Unknown": "Unbekannt"}
+STATUS_DE = {_("Charging"): _("Wird geladen"), _("Discharging"): _("Entlädt"), _("Full"): _("Voll"),
+             _("Not charging"): _("Netzbetrieb"), _("Unknown"): _("Unbekannt")}
 
 
 def kv_grid(rows):
@@ -27,7 +29,7 @@ def kv_grid(rows):
 
 
 class OverviewTab(Tab):
-    title = "Übersicht"
+    title = _("Übersicht")
     icon = "view-grid-symbolic"
 
     def __init__(self, app):
@@ -42,45 +44,45 @@ class OverviewTab(Tab):
 
         # ---------------- Zeile 1: Ringe
         self.cpu_ring = RingGauge("cpu")
-        g, self.cpu_kv = kv_grid([("speed", "Takt"), ("temp", "Temperatur"), ("load", "Last 1/5/15"),
-                                  ("procs", "Prozesse")])
+        g, self.cpu_kv = kv_grid([("speed", _("Takt")), ("temp", _("Temperatur")), ("load", _("Last 1/5/15")),
+                                  ("procs", _("Prozesse"))])
         cores = Gtk.Grid(column_spacing=8, row_spacing=4)
         self.core_bars = []
         n = self.cpu_info["logical"]
         cols = 2 if n <= 8 else 4
         for i in range(n):
             bar = UsageBar("cpu", height=6)
-            bar.set_tooltip_text(f"Logischer Prozessor {i}")
+            bar.set_tooltip_text(_('Logischer Prozessor {0}').format(i))
             cores.attach(bar, i % cols, i // cols, 1, 1)
             self.core_bars.append(bar)
-        grid.attach(self._ring_card("Prozessor", self.cpu_ring, g, extra=cores), 0, 0, 1, 1)
+        grid.attach(self._ring_card(_("Prozessor"), self.cpu_ring, g, extra=cores), 0, 0, 1, 1)
 
         self.mem_ring = RingGauge("mem")
-        g, self.mem_kv = kv_grid([("used", "Belegt"), ("avail", "Verfügbar"), ("cache", "Cache"),
-                                  ("swap", "Swap")])
+        g, self.mem_kv = kv_grid([("used", _("Belegt")), ("avail", _("Verfügbar")), ("cache", _("Cache")),
+                                  ("swap", _("Swap"))])
         self.swap_bar = UsageBar("mem", height=6)
-        grid.attach(self._ring_card("Arbeitsspeicher", self.mem_ring, g, extra=self.swap_bar), 1, 0, 1, 1)
+        grid.attach(self._ring_card(_("Arbeitsspeicher"), self.mem_ring, g, extra=self.swap_bar), 1, 0, 1, 1)
 
         self.gpu_ring = RingGauge("gpu")
-        g, self.gpu_kv = kv_grid([("name", "Modell"), ("freq", "Takt"), ("temp", "Temperatur"),
-                                  ("vram", "Speicher")])
-        grid.attach(self._ring_card("Grafik", self.gpu_ring, g), 2, 0, 1, 1)
+        g, self.gpu_kv = kv_grid([("name", _("Modell")), ("freq", _("Takt")), ("temp", _("Temperatur")),
+                                  ("vram", _("Speicher"))])
+        grid.attach(self._ring_card(_("Grafik"), self.gpu_ring, g), 2, 0, 1, 1)
 
         self.pow_ring = RingGauge("power", levels="low")
-        g, self.pow_kv = kv_grid([("status", "Status"), ("watts", "Leistung"), ("time", "Restzeit"),
-                                  ("health", "Akkuzustand")])
-        grid.attach(self._ring_card("Energie", self.pow_ring, g), 3, 0, 1, 1)
+        g, self.pow_kv = kv_grid([("status", _("Status")), ("watts", _("Leistungsaufnahme")), ("time", _("Restzeit")),
+                                  ("health", _("Akkuzustand"))])
+        grid.attach(self._ring_card(_("Energie"), self.pow_ring, g), 3, 0, 1, 1)
 
         # ---------------- Zeile 2: Netzwerk + Datenträger-E/A
         self.net_graph = Graph("net", series=2, fixed_max=None, min_scale=12500, colors=["net", "cpu"])
         self.net_graph.set_size_request(200, 120)
-        self.net_down = styled_label("0 Kbit/s", "tm-big")
-        self.net_up = styled_label("0 Kbit/s", "tm-big")
+        self.net_down = styled_label(_("0 Kbit/s"), "tm-big")
+        self.net_up = styled_label(_("0 Kbit/s"), "tm-big")
         self.net_info = styled_label("", "tm-dim", ellipsize=Pango.EllipsizeMode.END)
         self.net_scale = styled_label("", "tm-dim", xalign=1)
         self.net_graph.scale_changed = lambda v: self.net_scale.set_text(f"max {util.bits(v)}")
-        grid.attach(self._io_card("Netzwerk", self.net_graph,
-                                  ("▼ Empfangen", self.net_down, "net"), ("▲ Senden", self.net_up, "cpu"),
+        grid.attach(self._io_card(_("Netzwerk"), self.net_graph,
+                                  (_("▼ Empfangen"), self.net_down, "net"), (_("▲ Senden"), self.net_up, "cpu"),
                                   self.net_info, self.net_scale), 0, 1, 2, 1)
 
         self.disk_graph = Graph("disk", series=2, fixed_max=None, min_scale=1048576, colors=["disk", "mem"])
@@ -90,27 +92,27 @@ class OverviewTab(Tab):
         self.disk_info = styled_label("", "tm-dim", ellipsize=Pango.EllipsizeMode.END)
         self.disk_scale = styled_label("", "tm-dim", xalign=1)
         self.disk_graph.scale_changed = lambda v: self.disk_scale.set_text(f"max {util.rate(v)}")
-        grid.attach(self._io_card("Datenträger-Aktivität", self.disk_graph,
-                                  ("▼ Lesen", self.disk_read, "disk"), ("▲ Schreiben", self.disk_write, "mem"),
+        grid.attach(self._io_card(_("Datenträger-Aktivität"), self.disk_graph,
+                                  (_("▼ Lesen"), self.disk_read, "disk"), (_("▲ Schreiben"), self.disk_write, "mem"),
                                   self.disk_info, self.disk_scale), 2, 1, 2, 1)
 
         # ---------------- Zeile 3: Festplattenbelegung + Top-Prozesse
         self.mount_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         self.mount_rows = {}
-        storage = card("Festplattenbelegung", self.mount_box)
-        btn = Gtk.Button(label="Speicherplatz analysieren  →")
+        storage = card(_("Festplattenbelegung"), self.mount_box)
+        btn = Gtk.Button(label=_("Speicherplatz analysieren  →"))
         btn.get_style_context().add_class("tm-primary")
         btn.set_halign(Gtk.Align.END)
-        btn.connect("clicked", lambda *_: self.app.show_page("storage"))
+        btn.connect("clicked", lambda *_xx: self.app.show_page("storage"))
         storage.pack_end(btn, False, False, 0)
         grid.attach(storage, 0, 2, 2, 1)
 
-        top = card("Top-Prozesse")
+        top = card(_("Top-Prozesse"))
         switch = Gtk.Box(spacing=0)
         switch.get_style_context().add_class("linked")
-        self.top_cpu = Gtk.RadioButton.new_with_label(None, "CPU")
-        self.top_mem = Gtk.RadioButton.new_with_label_from_widget(self.top_cpu, "Arbeitsspeicher")
-        self.top_io = Gtk.RadioButton.new_with_label_from_widget(self.top_cpu, "Datenträger")
+        self.top_cpu = Gtk.RadioButton.new_with_label(None, _("CPU"))
+        self.top_mem = Gtk.RadioButton.new_with_label_from_widget(self.top_cpu, _("Arbeitsspeicher"))
+        self.top_io = Gtk.RadioButton.new_with_label_from_widget(self.top_cpu, _("Datenträger"))
         for rb in (self.top_cpu, self.top_mem, self.top_io):
             rb.set_mode(False)
             rb.connect("toggled", lambda b: b.get_active() and self._refresh_top())
@@ -138,16 +140,16 @@ class OverviewTab(Tab):
 
         # ---------------- Zeile 4: System
         sysbox = Gtk.Box(spacing=40)
-        g1, self.sys_kv1 = kv_grid([("host", "Rechnername"), ("os", "Betriebssystem"),
-                                    ("kernel", "Kernel"), ("desktop", "Desktop")])
-        g2, self.sys_kv2 = kv_grid([("cpu", "Prozessor"), ("cores", "Kerne/Threads"),
-                                    ("uptime", "Betriebszeit"), ("boot", "Gestartet")])
-        g3, self.sys_kv3 = kv_grid([("threads", "Threads"), ("handles", "Handles"),
-                                    ("conns", "Netzwerkverbindungen"), ("users", "Angemeldet")])
+        g1, self.sys_kv1 = kv_grid([("host", _("Rechnername")), ("os", _("Betriebssystem")),
+                                    ("kernel", _("Kernel")), ("desktop", _("Desktop"))])
+        g2, self.sys_kv2 = kv_grid([("cpu", _("Prozessor")), ("cores", _("Kerne/Threads")),
+                                    ("uptime", _("Betriebszeit")), ("boot", _("Gestartet"))])
+        g3, self.sys_kv3 = kv_grid([("threads", _("Threads")), ("handles", _("Handles")),
+                                    ("conns", _("Netzwerkverbindungen")), ("users", _("Angemeldet"))])
         for g in (g1, g2, g3):
             g.set_hexpand(True)
             sysbox.pack_start(g, True, True, 0)
-        grid.attach(card("System", sysbox), 0, 3, 4, 1)
+        grid.attach(card(_("System"), sysbox), 0, 3, 4, 1)
 
         self.sys_kv1["host"].set_text(self.os["host"])
         self.sys_kv1["os"].set_text(self.os["os"])
@@ -155,10 +157,10 @@ class OverviewTab(Tab):
         self.sys_kv1["desktop"].set_text(self.os["desktop"])
         self.sys_kv2["cpu"].set_text(self.cpu_info["model"])
         self.sys_kv2["cpu"].set_tooltip_text(self.cpu_info["model"])
-        self.sys_kv2["cores"].set_text(f"{self.cpu_info['cores']} Kerne / {self.cpu_info['logical']} Threads")
+        self.sys_kv2["cores"].set_text(_('{0} Kerne / {1} Threads').format(self.cpu_info['cores'], self.cpu_info['logical']))
         self.sys_kv2["boot"].set_text(util.datetime(psutil.boot_time())[:-3])
         if self.gpus:
-            self.gpu_kv["name"].set_text(self.gpus[0]["name"].replace("Intel ", ""))
+            self.gpu_kv["name"].set_text(self.gpus[0]["name"].replace(_("Intel "), ""))
             self.gpu_kv["name"].set_tooltip_text(self.gpus[0]["name"])
 
         sw = Gtk.ScrolledWindow()
@@ -208,7 +210,7 @@ class OverviewTab(Tab):
         pct = styled_label("", "tm-mid", xalign=1)
         head.pack_end(pct, False, False, 0)
         bar = UsageBar("disk", height=12)
-        info = styled_label("", "tm-dim tm-num")
+        info = styled_label("", _("tm-dim tm-num"))
         box.pack_start(head, False, False, 0)
         box.pack_start(bar, False, False, 0)
         box.pack_start(info, False, False, 0)
@@ -223,7 +225,7 @@ class OverviewTab(Tab):
         set_text(self.cpu_kv["speed"], util.ghz(s.cpu_freq))
         set_text(self.cpu_kv["temp"], f"{util.num(s.cpu_temp, 0)} °C" if s.cpu_temp is not None else "–")
         set_text(self.cpu_kv["load"], " / ".join(util.num(x, 2) for x in s.loadavg))
-        set_text(self.cpu_kv["procs"], f"{len(s.procs)} · {util.num(s.threads, 0)} Threads")
+        set_text(self.cpu_kv["procs"], _('{0} · {1} Threads').format(len(s.procs), util.num(s.threads, 0)))
         for bar, v in zip(self.core_bars, s.cpu_per_core):
             bar.set_fraction(v / 100)
         # RAM
@@ -241,34 +243,34 @@ class OverviewTab(Tab):
             d = s.gpus.get(self.gpus[0]["card"], {})
             u = d.get("usage")
             self.gpu_ring.set_value(u or 0, text=util.pct(u) if u is not None else "–",
-                                    sub="geschätzt" if d.get("estimated") else "")
+                                    sub=_("geschätzt") if d.get("estimated") else "")
             set_text(self.gpu_kv["freq"], f"{d['freq']} / {d['max_freq']} MHz" if d.get("freq") is not None else "–")
             set_text(self.gpu_kv["temp"], f"{util.num(d['temp'], 0)} °C" if d.get("temp") is not None else "–")
             set_text(self.gpu_kv["vram"], f"{util.size(d['vram_used'])} / {util.size(d['vram_total'])}"
-                     if d.get("vram_total") else ("gemeinsam mit RAM" if d.get("estimated") else "–"))
+                     if d.get("vram_total") else (_("gemeinsam mit RAM") if d.get("estimated") else "–"))
         else:
-            self.gpu_ring.set_value(0, text="–", sub="keine Daten")
+            self.gpu_ring.set_value(0, text="–", sub=_("keine Daten"))
         # Energie
         b = s.battery
         if b:
-            self.pow_ring.set_value(b["percent"], sub="Akku")
+            self.pow_ring.set_value(b["percent"], sub=_("Akku"))
             st = STATUS_DE.get(b["status"], b["status"])
-            if b["ac"] and b["status"] == "Discharging":
-                st = "Entlädt"
+            if b["ac"] and b["status"] == _("Discharging"):
+                st = _("Entlädt")
             set_text(self.pow_kv["status"], st)
             set_text(self.pow_kv["watts"], f"{util.num(b['watts'], 1)} W" if b["watts"] else
-                     ("0 W (Netzteil)" if b["ac"] else "–"))
+                     (_("0 W (Netzteil)") if b["ac"] else "–"))
             if b["secs"]:
                 h, m = divmod(int(b["secs"]) // 60, 60)
-                set_text(self.pow_kv["time"], f"{h} h {m:02d} min")
+                set_text(self.pow_kv["time"], _('{0} h {1:02d} min').format(h, m))
             else:
                 set_text(self.pow_kv["time"], "–")
             set_text(self.pow_kv["health"], util.pct(b["health"]) if b["health"] else "–")
         else:
-            self.pow_ring.set_value(100, text="AC", sub="Netzbetrieb")
+            self.pow_ring.set_value(100, text=_("AC"), sub=_("Netzbetrieb"))
             for k in self.pow_kv:
                 set_text(self.pow_kv[k], "–")
-            set_text(self.pow_kv["status"], "Kein Akku")
+            set_text(self.pow_kv["status"], _("Kein Akku"))
         # Netzwerk (Summe aller Adapter)
         down = sum(d["recv"] for d in s.net.values())
         up = sum(d["sent"] for d in s.net.values())
@@ -276,14 +278,14 @@ class OverviewTab(Tab):
         set_text(self.net_down, util.bits(down))
         set_text(self.net_up, util.bits(up))
         active = [n for n, d in s.net.items() if d["recv"] or d["sent"]]
-        set_text(self.net_info, "Aktiv: " + (", ".join(active) if active else "keine Übertragung"))
+        set_text(self.net_info, _("Aktiv: ") + (", ".join(active) if active else _("keine Übertragung")))
         # Datenträger
         rd = sum(d["read"] for d in s.disks.values())
         wr = sum(d["write"] for d in s.disks.values())
         self.disk_graph.push(rd, wr)
         set_text(self.disk_read, util.rate(rd))
         set_text(self.disk_write, util.rate(wr))
-        set_text(self.disk_info, "  ·  ".join(f"{n}: {util.pct(d['active'])} aktiv" for n, d in s.disks.items()))
+        set_text(self.disk_info, "  ·  ".join(_('{0}: {1} aktiv').format(n, util.pct(d['active'])) for n, d in s.disks.items()))
         # Belegung
         self._update_mounts(s.mounts)
         # Top-Prozesse
@@ -296,8 +298,8 @@ class OverviewTab(Tab):
             self._conn_t = time.monotonic()
             try:
                 conns = psutil.net_connections("inet")
-                est = sum(1 for c in conns if c.status == "ESTABLISHED")
-                self._conn_text = f"{len(conns)} ({est} verbunden)"
+                est = sum(1 for c in conns if c.status == _("ESTABLISHED"))
+                self._conn_text = _('{0} ({1} verbunden)').format(len(conns), est)
             except (psutil.Error, OSError):
                 self._conn_text = "–"
             users = sorted({u.name for u in psutil.users()})
@@ -314,13 +316,12 @@ class OverviewTab(Tab):
             if row is None:
                 row = self.mount_rows[m["mount"]] = self._mount_row(m)
                 self.mount_box.pack_start(row["box"], False, False, 0)
-            label = "System (/)" if m["mount"] == "/" else m["mount"]
+            label = _("System (/)") if m["mount"] == "/" else m["mount"]
             set_text(row["name"], label)
             set_text(row["sub"], f"{m['device']} · {m['fstype']}")
             set_text(row["pct"], util.pct(m["percent"]))
             row["bar"].set_fraction(m["percent"] / 100)
-            set_text(row["info"], f"{util.size(m['used'])} belegt  ·  {util.size(m['free'])} frei  ·  "
-                                  f"{util.size(m['total'])} gesamt")
+            set_text(row["info"], _('{0} belegt  ·  {1} frei  ·  {2} gesamt').format(util.size(m['used']), util.size(m['free']), util.size(m['total'])))
 
     def _refresh_top(self):
         s = self._last_snap
@@ -348,7 +349,7 @@ class OverviewTab(Tab):
             if icon.get_pixbuf() is not pix:
                 icon.set_from_pixbuf(pix)
             set_text(name, p.name)
-            name.set_tooltip_text(f"PID {p.pid} · {p.user}\n{p.cmdline or p.name}")
+            name.set_tooltip_text(_('PID {0} · {1}\n{2}').format(p.pid, p.user, p.cmdline or p.name))
             bar.color = color
             bar.set_fraction(key(p) / mx if mx else 0)
             bar.queue_draw()

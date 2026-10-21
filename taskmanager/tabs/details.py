@@ -1,5 +1,7 @@
 """Registerkarte „Details“: flache Liste aller Prozesse mit vielen Spalten."""
 
+from ..i18n import _
+
 from gi.repository import GdkPixbuf, GObject, Gdk, Gtk, Pango
 
 from .. import actions, icons, util
@@ -9,6 +11,8 @@ from . import Tab, scrolled
 
 I64 = GObject.TYPE_INT64
 # (Titel, Typ, Formatierer, rechtsbündig, Heatmap-Skala)
+# Titel sind feste (deutsche) Schlüssel – übersetzt wird erst bei der Anzeige,
+# damit ausgeblendete Spalten beim Sprachwechsel erhalten bleiben.
 COLUMNS = [
     ("Name", str, None, False, None),
     ("PID", int, str, True, None),
@@ -36,7 +40,7 @@ C_USER = OFFSET + 4
 
 
 class DetailsTab(Tab):
-    title = "Details"
+    title = _("Details")
 
     def __init__(self, app):
         super().__init__(app)
@@ -55,7 +59,7 @@ class DetailsTab(Tab):
         hidden = set(self.app.settings["details_hidden_columns"])
         for i, (title, typ, fmt, right, heat) in enumerate(COLUMNS):
             col_id = OFFSET + i
-            column = Gtk.TreeViewColumn(title)
+            column = Gtk.TreeViewColumn(_(title))
             if i == 0:
                 pix = Gtk.CellRendererPixbuf()
                 column.pack_start(pix, False)
@@ -74,7 +78,7 @@ class DetailsTab(Tab):
             column.set_resizable(True)
             column.set_reorderable(True)
             column.set_alignment(1.0 if right else 0.0)
-            if title in ("Name",):
+            if title == "Name":
                 column.set_min_width(180)
             if title in ("Befehlszeile", "Pfad"):
                 column.set_min_width(250)
@@ -87,12 +91,12 @@ class DetailsTab(Tab):
         view.connect("key-press-event", self._on_key)
         view.get_selection().connect("changed", lambda s: self._update_buttons())
 
-        self.search = Gtk.SearchEntry(placeholder_text="Name, PID, Benutzer oder Befehl…", width_chars=34)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Name, PID, Benutzer oder Befehl…"), width_chars=34)
         self.search.connect("search-changed", self._on_search)
-        cols_btn = Gtk.MenuButton(label="Spalten auswählen")
+        cols_btn = Gtk.MenuButton(label=_("Spalten auswählen"))
         cols_btn.set_popover(self._columns_popover(cols_btn))
-        self.end_button = Gtk.Button(label="Task beenden")
-        self.end_button.connect("clicked", lambda *_: self.end_selected())
+        self.end_button = Gtk.Button(label=_("Task beenden"))
+        self.end_button.connect("clicked", lambda *_xx: self.end_selected())
         self.end_button.set_sensitive(False)
         self.end_button.get_style_context().add_class("tm-danger")
         top = Gtk.Box(spacing=8, margin=10)
@@ -119,7 +123,7 @@ class DetailsTab(Tab):
         for title in self.columns:
             if title == "Name":
                 continue
-            cb = Gtk.CheckButton(label=title)
+            cb = Gtk.CheckButton(label=_(title))
             cb.set_active(self.columns[title].get_visible())
             cb.connect("toggled", self._on_column_toggled, title)
             box.pack_start(cb, False, False, 0)

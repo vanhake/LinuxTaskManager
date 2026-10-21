@@ -3,7 +3,10 @@
 **Ein moderner Taskmanager für Linux Mint** – inspiriert vom Windows-Taskmanager und von
 [TMOG](https://www.omgubuntu.co.uk/2026/09/tmog-task-manager-linux-beta): Neon-Design, Dashboard,
 Flight Recorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Modus.
-Komplett auf Deutsch, ohne zusätzliche Pakete lauffähig.
+**Deutsch und Englisch** (umschaltbar), ohne zusätzliche Pakete lauffähig.
+
+> 🇬🇧 *English:* A modern task manager for Linux Mint with dashboard, flight recorder, CPU benchmark and
+> disk analysis. Switch the language via **☰ → Sprache / Language → English**.
 
 ![Übersicht](docs/screenshots/uebersicht.png)
 
@@ -45,8 +48,8 @@ Komplett auf Deutsch, ohne zusätzliche Pakete lauffähig.
 | **Details** | Alle Prozesse mit 18 wählbaren Spalten, Anhalten/Fortsetzen |
 | **Dienste** | systemd-Dienste starten, beenden, neu starten, Autostart ein/aus |
 
-Außerdem: **5 Farbschemata** (Neon, Synthwave, Matrix, Amber, Hell) und ein **Mini-Modus** als
-kleines, schwebendes Fenster.
+Außerdem: **5 Farbschemata** (Neon, Synthwave, Matrix, Amber, Hell), ein **Mini-Modus** als
+kleines, schwebendes Fenster und **zwei Sprachen** (Deutsch/Englisch).
 
 ---
 
@@ -133,8 +136,11 @@ Mit Tastenkürzel **Strg+Umschalt+Esc** (wie unter Windows, nur Cinnamon):
 ## Bedienung
 
 - **Navigation:** Seitenleiste links oder **Strg+1 … Strg+0**
-- **Menü (☰ oben rechts):** Farbschema, Aktualisierungsgeschwindigkeit (0,5 s / 1 s / 4 s / angehalten),
-  Prozesse nach Typ gruppieren, Immer im Vordergrund, Über
+- **Menü (☰ oben rechts):** Farbschema, **Sprache / Language** (Automatisch, Deutsch, English),
+  Aktualisierungsgeschwindigkeit (0,5 s / 1 s / 4 s / angehalten), Prozesse nach Typ gruppieren,
+  Immer im Vordergrund, Über
+- **Sprache wechseln:** ☰ → Sprache / Language → gewünschte Sprache → „Jetzt neu starten“.
+  „Automatisch“ richtet sich nach der Systemsprache (Deutsch bei deutschem System, sonst Englisch).
 - **Kopfleiste:** ➕ neuen Task starten · ⟳ aktualisieren · Mini-Modus · Live-Werte in der Mitte
 - **Prozess beenden:** Prozess markieren → **Entf** oder Button „Task beenden“
 - **Rechtsklick auf einen Prozess:** Task beenden · Beenden erzwingen · Prozessbaum beenden ·
@@ -261,6 +267,8 @@ taskmanager/
 ├── recorder.py     Flight Recorder (SQLite, Ereigniserkennung, Hintergrunddienst)
 ├── benchmark.py    CPU-Benchmark und Belastungstest (multiprocessing)
 ├── theme.py        Farbschemata und GTK-CSS
+├── i18n.py         Sprachumschaltung, Funktion _()
+├── locale_en.py    Englische Übersetzung (Schlüssel = deutscher Text)
 ├── widgets.py      Graphen, Ringanzeigen, Balken, Treemap
 └── tabs/           eine Datei je Seite
 ```

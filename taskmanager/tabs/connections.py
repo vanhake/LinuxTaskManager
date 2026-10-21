@@ -1,5 +1,7 @@
 """Registerkarte „Verbindungen“: offene Netzwerkverbindungen je Prozess."""
 
+from ..i18n import _
+
 import socket
 import time
 
@@ -13,10 +15,10 @@ from . import Tab, scrolled, text_column
 
 C_ICON, C_PROC, C_PID, C_PROTO, C_LOCAL, C_REMOTE, C_STATUS, C_RAW = range(8)
 STATUS_DE = {
-    "ESTABLISHED": "Verbunden", "LISTEN": "Lauscht", "TIME_WAIT": "Wartet (TIME_WAIT)",
-    "CLOSE_WAIT": "Schließen wartet", "SYN_SENT": "Verbindet…", "SYN_RECV": "Verbindet…",
-    "FIN_WAIT1": "Wird getrennt", "FIN_WAIT2": "Wird getrennt", "LAST_ACK": "Wird getrennt",
-    "CLOSING": "Wird geschlossen", "NONE": "–", "CLOSE": "Geschlossen",
+    _("ESTABLISHED"): _("Verbunden"), _("LISTEN"): _("Lauscht"), "TIME_WAIT": _("Wartet (TIME_WAIT)"),
+    "CLOSE_WAIT": _("Schließen wartet"), "SYN_SENT": _("Verbindet…"), "SYN_RECV": _("Verbindet…"),
+    "FIN_WAIT1": _("Wird getrennt"), "FIN_WAIT2": _("Wird getrennt"), "LAST_ACK": _("Wird getrennt"),
+    _("CLOSING"): _("Wird geschlossen"), _("NONE"): "–", _("CLOSE"): _("Geschlossen"),
 }
 
 
@@ -28,7 +30,7 @@ def _addr(a):
 
 
 class ConnectionsTab(Tab):
-    title = "Verbindungen"
+    title = _("Verbindungen")
     icon = "network-transmit-receive-symbolic"
 
     def __init__(self, app):
@@ -42,7 +44,7 @@ class ConnectionsTab(Tab):
         view = self.view = Gtk.TreeView(model=self.sorted)
         view.set_enable_search(False)
 
-        col = Gtk.TreeViewColumn("Prozess")
+        col = Gtk.TreeViewColumn(_("Prozess"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "pixbuf", C_ICON)
@@ -53,19 +55,19 @@ class ConnectionsTab(Tab):
         col.set_resizable(True)
         col.set_min_width(200)
         view.append_column(col)
-        text_column(view, "PID", C_PID, C_PID, 1.0,
+        text_column(view, _("PID"), C_PID, C_PID, 1.0,
                     func=lambda co, ce, m, it, d: ce.set_property(
                         "text", str(m.get_value(it, C_PID)) if m.get_value(it, C_PID) > 0 else "–"))
-        text_column(view, "Protokoll", C_PROTO, C_PROTO)
-        text_column(view, "Lokale Adresse", C_LOCAL, C_LOCAL, width=230, ellipsize=True)
-        text_column(view, "Remote-Adresse", C_REMOTE, C_REMOTE, expand=True, ellipsize=True)
-        text_column(view, "Status", C_STATUS, C_STATUS, width=150)
+        text_column(view, _("Protokoll"), C_PROTO, C_PROTO)
+        text_column(view, _("Lokale Adresse"), C_LOCAL, C_LOCAL, width=230, ellipsize=True)
+        text_column(view, _("Remote-Adresse"), C_REMOTE, C_REMOTE, expand=True, ellipsize=True)
+        text_column(view, _("Status"), C_STATUS, C_STATUS, width=150)
         view.connect("button-press-event", self._on_button)
 
-        self.search = Gtk.SearchEntry(placeholder_text="Prozess, Adresse oder Port…", width_chars=30)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Prozess, Adresse oder Port…"), width_chars=30)
         self.search.connect("search-changed", lambda e: self.filter.refilter())
         self.state = Gtk.ComboBoxText()
-        for k, label in (("all", "Alle"), ("est", "Nur verbundene"), ("listen", "Nur lauschende")):
+        for k, label in (("all", _("Alle")), ("est", _("Nur verbundene")), ("listen", _("Nur lauschende"))):
             self.state.append(k, label)
         self.state.set_active_id("all")
         self.state.connect("changed", lambda c: self.filter.refilter())
@@ -74,7 +76,7 @@ class ConnectionsTab(Tab):
         top.pack_start(self.search, False, False, 0)
         top.pack_start(self.state, False, False, 0)
         top.pack_end(self.summary, False, False, 0)
-        hint = styled_label("Ohne Root-Rechte wird der Prozess nur für eigene Verbindungen angezeigt.",
+        hint = styled_label(_("Ohne Root-Rechte wird der Prozess nur für eigene Verbindungen angezeigt."),
                             "tm-dim", margin=8)
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         box.pack_start(top, False, False, 0)
@@ -101,13 +103,13 @@ class ConnectionsTab(Tab):
         rows = []
         est = listen = 0
         for c in conns:
-            proto = ("TCP" if c.type == socket.SOCK_STREAM else "UDP") + \
+            proto = (_("TCP") if c.type == socket.SOCK_STREAM else _("UDP")) + \
                     ("6" if c.family == socket.AF_INET6 else "")
-            st = c.status if c.type == socket.SOCK_STREAM else "NONE"
-            est += st == "ESTABLISHED"
-            listen += st == "LISTEN"
+            st = c.status if c.type == socket.SOCK_STREAM else _("NONE")
+            est += st == _("ESTABLISHED")
+            listen += st == _("LISTEN")
             p = procs.get(c.pid) if c.pid else None
-            name = p.name if p else ("System / anderer Benutzer" if not c.pid else str(c.pid))
+            name = p.name if p else (_("System / anderer Benutzer") if not c.pid else str(c.pid))
             key = (c.pid, proto, _addr(c.laddr), _addr(c.raddr))
             rows.append((key, None, [icons.for_process(p.name, p.exe) if p else icons.named("network-server"),
                                      name, c.pid or 0, proto, _addr(c.laddr), _addr(c.raddr) or "–",
@@ -117,15 +119,15 @@ class ConnectionsTab(Tab):
         for r in rows:
             seen[r[0]] = r
         self.sync.sync(list(seen.values()))
-        set_text(self.summary, f"{len(conns)} Verbindungen · {est} verbunden · {listen} lauschend")
+        set_text(self.summary, _('{0} Verbindungen · {1} verbunden · {2} lauschend').format(len(conns), est, listen))
         self.filter.refilter()
 
     def _visible(self, model, it, data):
         st = model.get_value(it, C_RAW)
         mode = self.state.get_active_id()
-        if mode == "est" and st != "ESTABLISHED":
+        if mode == "est" and st != _("ESTABLISHED"):
             return False
-        if mode == "listen" and st != "LISTEN":
+        if mode == "listen" and st != _("LISTEN"):
             return False
         q = self.search.get_text().strip().lower()
         if not q:

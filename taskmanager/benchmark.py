@@ -9,6 +9,8 @@ Single-Core: ein Prozess. Multi-Core: ein Prozess je logischem Prozessor,
 alle gleichzeitig; die Durchläufe werden addiert.
 """
 
+from .i18n import _
+
 import hashlib
 import json
 import math
@@ -25,15 +27,15 @@ HISTORY_PATH = os.path.join(DATA_DIR, "benchmarks.json")
 
 # (Schlüssel, Name, Beschreibung, Referenz-Durchläufe/s auf einem Kern des i5-4300M)
 TESTS = [
-    ("int", "Ganzzahl", "Primzahlsieb bis 15.000 (Python-Interpreter, Sprünge, Ganzzahlen)", 400.0),
-    ("float", "Gleitkomma", "Mandelbrot-Menge 48×48 (Gleitkomma, Schleifen)", 105.0),
-    ("hash", "Kryptografie", "SHA-256 über 1 MB (nativer Code, ALU)", 375.0),
-    ("zip", "Kompression", "zlib Stufe 6 über 256 KB Text (Verzweigungen, Cache)", 66.0),
-    ("sort", "Sortieren", "100.000 Ganzzahlen sortieren (Speicher, Vergleiche)", 44.0),
+    ("int", _("Ganzzahl"), _("Primzahlsieb bis 15.000 (Python-Interpreter, Sprünge, Ganzzahlen)"), 400.0),
+    ("float", _("Gleitkomma"), _("Mandelbrot-Menge 48×48 (Gleitkomma, Schleifen)"), 105.0),
+    ("hash", _("Kryptografie"), _("SHA-256 über 1 MB (nativer Code, ALU)"), 375.0),
+    ("zip", _("Kompression"), _("zlib Stufe 6 über 256 KB Text (Verzweigungen, Cache)"), 66.0),
+    ("sort", _("Sortieren"), _("100.000 Ganzzahlen sortieren (Speicher, Vergleiche)"), 44.0),
 ]
 REFERENCE = {}  # wird unten aus TESTS befüllt
 
-MODES = [("Schnell", 1.5), ("Standard", 3.0), ("Gründlich", 6.0)]
+MODES = [(_("Schnell"), 1.5), (_("Standard"), 3.0), (_("Gründlich"), 6.0)]
 
 # ---------------------------------------------------------------- Arbeit
 _stop = None
@@ -53,10 +55,10 @@ def _setup():
     if _data:
         return
     rnd = random.Random(42)
-    _data["buf"] = bytes(rnd.getrandbits(8) for _ in range(1 << 20))
+    _data["buf"] = bytes(rnd.getrandbits(8) for _x in range(1 << 20))
     words = ["prozess", "speicher", "kern", "linux", "mint", "takt", "daten", "netz", "task", "manager"]
-    _data["text"] = " ".join(rnd.choice(words) + str(rnd.randint(0, 999)) for _ in range(40000)).encode()[:262144]
-    _data["ints"] = [rnd.randint(0, 1 << 30) for _ in range(100000)]
+    _data["text"] = " ".join(rnd.choice(words) + str(rnd.randint(0, 999)) for _x in range(40000)).encode()[:262144]
+    _data["ints"] = [rnd.randint(0, 1 << 30) for _x in range(100000)]
 
 
 def _w_int():
@@ -128,7 +130,7 @@ def run_test(key, duration, start_at=0.0):
     return count, now - t0
 
 
-def stress_worker(_):
+def stress_worker(_x):
     """Dauerlast bis zum Stopp-Signal (Mischung aller Tests)."""
     _setup()
     fns = list(WORK.values())
@@ -139,7 +141,7 @@ def stress_worker(_):
     return i
 
 
-def _noop(_):
+def _noop(_x):
     _setup()
     return os.getpid()
 
@@ -183,13 +185,13 @@ class BenchmarkRun(threading.Thread):
         step = 0
         try:
             for mode, n in (("single", 1), ("multi", self.threads)):
-                self.on_progress(f"Starte {n} Prozess(e)…", step / steps, mode, None)
+                self.on_progress(_('Starte {0} Prozess(e)…').format(n), step / steps, mode, None)
                 with self.ctx.Pool(n, initializer=_init, initargs=(self.stop_event,)) as pool:
                     pool.map(_noop, range(n))  # Prozesse hochfahren, Testdaten anlegen
                     for key, name, desc, ref in TESTS:
                         if self.stop_event.is_set():
                             raise InterruptedError
-                        label = ("Single-Core" if mode == "single" else f"Multi-Core ({n} Threads)")
+                        label = (_("Single-Core") if mode == "single" else _('Multi-Core ({0} Threads)').format(n))
                         self.on_progress(f"{label}: {name}", step / steps, mode, key)
                         start_at = time.time() + 0.15
                         res = pool.starmap(run_test, [(key, self.duration, start_at)] * n)
@@ -202,7 +204,7 @@ class BenchmarkRun(threading.Thread):
                     raise InterruptedError
             result["single_total"] = geomean(result["single"].values())
             result["multi_total"] = geomean(result["multi"].values())
-            self.on_progress("Fertig", 1.0, None, None)
+            self.on_progress(_("Fertig"), 1.0, None, None)
             self.on_done(result, None)
         except InterruptedError:
             self.on_done(None, "abgebrochen")

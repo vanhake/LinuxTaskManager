@@ -1,5 +1,7 @@
 """Mini-Modus: kompaktes, rahmenloses Fenster, immer im Vordergrund."""
 
+from .i18n import _
+
 from gi.repository import Gdk, Gtk
 
 from . import util
@@ -8,7 +10,7 @@ from .widgets import Graph, UsageBar, set_text, styled_label
 
 class MiniWindow(Gtk.Window):
     def __init__(self, app):
-        super().__init__(title="Taskmanager Mini")
+        super().__init__(title=_("Taskmanager Mini"))
         self.app = app
         self.set_decorated(False)
         self.set_keep_above(True)
@@ -28,19 +30,19 @@ class MiniWindow(Gtk.Window):
         frame.set_border_width(14)
 
         head = Gtk.Box(spacing=6)
-        brand = styled_label("TASKMANAGER", "tm-chip")
+        brand = styled_label(_("TASKMANAGER"), "tm-chip")
         head.pack_start(brand, False, False, 0)
         close = Gtk.Button.new_from_icon_name("window-close-symbolic", Gtk.IconSize.MENU)
         close.set_relief(Gtk.ReliefStyle.NONE)
-        close.set_tooltip_text("Mini-Modus beenden")
-        close.connect("clicked", lambda *_: self.app.toggle_mini(False))
+        close.set_tooltip_text(_("Mini-Modus beenden"))
+        close.connect("clicked", lambda *_xx: self.app.toggle_mini(False))
         head.pack_end(close, False, False, 0)
         frame.pack_start(head, False, False, 0)
 
         self.rows = {}
         grid = Gtk.Grid(column_spacing=10, row_spacing=6)
-        for i, (key, label, color) in enumerate((("cpu", "CPU", "cpu"), ("mem", "RAM", "mem"),
-                                                 ("gpu", "GPU", "gpu"), ("disk", "DISK", "disk"))):
+        for i, (key, label, color) in enumerate((("cpu", _("CPU"), "cpu"), ("mem", _("RAM"), "mem"),
+                                                 ("gpu", _("GPU"), "gpu"), ("disk", _("DISK"), "disk"))):
             grid.attach(styled_label(label, "tm-card-title"), 0, i, 1, 1)
             bar = UsageBar(color, height=9)
             bar.set_size_request(130, 9)
@@ -54,13 +56,13 @@ class MiniWindow(Gtk.Window):
         self.graph.set_size_request(230, 46)
         self.graph.set_margin_top(4)
         frame.pack_start(self.graph, False, False, 0)
-        self.net = styled_label("", "tm-num tm-dim")
+        self.net = styled_label("", _("tm-num tm-dim"))
         frame.pack_start(self.net, False, False, 0)
 
         ev = Gtk.EventBox()
         ev.add(frame)
         ev.connect("button-press-event", self._on_press)
-        ev.set_tooltip_text("Ziehen zum Verschieben · Doppelklick: großes Fenster")
+        ev.set_tooltip_text(_("Ziehen zum Verschieben · Doppelklick: großes Fenster"))
         self.add(ev)
         pos = app.settings.get("mini_pos")
         if pos:

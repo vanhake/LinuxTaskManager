@@ -1,5 +1,7 @@
 """Seite „Flight Recorder“: aufgezeichnete Systemdaten zurückspulen und abspielen."""
 
+from ..i18n import _
+
 import os
 import subprocess
 import sys
@@ -16,26 +18,27 @@ from . import Tab, scrolled
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 AUTOSTART = os.path.join(GLib.get_user_config_dir(), "autostart", "linux-taskmanager-recorder.desktop")
 
-RANGES = [("5 min", 300), ("15 min", 900), ("1 h", 3600), ("6 h", 21600), ("24 h", 86400), ("Alles", None)]
+RANGES = [(_("5 min"), 300), (_("15 min"), 900), ("1 h", 3600), ("6 h", 21600), ("24 h", 86400), (_("Alles"), None)]
 SPEEDS = [("1×", 1), ("10×", 10), ("60×", 60), ("300×", 300)]
 TICKS = [10, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400]
-WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+WEEKDAYS = [_("Mo"), _("Di"), _("Mi"), _("Do"), _("Fr"), _("Sa"), _("So")]
 
 # (Schlüssel, Titel, Farbe, feste Skala, Formatierer)
 LANES = [
-    ("cpu", "CPU", "cpu", 100.0, lambda v: util.pct(v)),
-    ("mem", "Arbeitsspeicher", "mem", 100.0, lambda v: util.pct(v)),
-    ("disk", "Datenträger", "disk", None, util.rate),
-    ("net", "Netzwerk", "net", None, util.bits),
-    ("gpu", "GPU", "gpu", 100.0, lambda v: util.pct(v)),
-    ("temp", "Temperatur", "power", 100.0, lambda v: f"{util.num(v, 0)} °C"),
+    ("cpu", _("CPU"), "cpu", 100.0, lambda v: util.pct(v)),
+    ("mem", _("Arbeitsspeicher"), "mem", 100.0, lambda v: util.pct(v)),
+    ("disk", _("Datenträger"), "disk", None, util.rate),
+    ("net", _("Netzwerk"), "net", None, util.bits),
+    ("gpu", _("GPU"), "gpu", 100.0, lambda v: util.pct(v)),
+    ("temp", _("Temperatur"), "power", 100.0, lambda v: f"{util.num(v, 0)} °C"),
 ]
 LEVEL_COLOR = {"crit": "crit", "warn": "warn", "info": "accent"}
 
 
 def fmt_time(ts, seconds=True):
     lt = time.localtime(ts)
-    return f"{WEEKDAYS[lt.tm_wday]} {time.strftime('%d.%m. %H:%M' + (':%S' if seconds else ''), lt)}"
+    fmt = util.date_fmt("day") + " %H:%M" + (":%S" if seconds else "")
+    return f"{WEEKDAYS[lt.tm_wday]} {time.strftime(fmt, lt)}"
 
 
 def ago(ts):
@@ -43,12 +46,12 @@ def ago(ts):
     if d < 5:
         return "jetzt"
     if d < 60:
-        return f"vor {d} s"
+        return _('vor {0} s').format(d)
     if d < 3600:
-        return f"vor {d // 60} min"
+        return _('vor {0} min').format(d // 60)
     if d < 86400:
-        return f"vor {d // 3600} h {d % 3600 // 60:02d} min"
-    return f"vor {d // 86400} T {d % 86400 // 3600} h"
+        return _('vor {0} h {1:02d} min').format(d // 3600, d % 3600 // 60)
+    return _('vor {0} T {1} h').format(d // 86400, d % 86400 // 3600)
 
 
 class Timeline(Gtk.DrawingArea):
@@ -160,7 +163,7 @@ class Timeline(Gtk.DrawingArea):
                 cr.stroke()
             cr.restore()
             draw_text(cr, widget, title.upper(), 10, y + 5, size=9, bold=True, color=(r, g, b, 0.95))
-            draw_text(cr, widget, f"Spitze {fmt(peak)}" if peak else "keine Daten", w - 10, y + 5,
+            draw_text(cr, widget, _('Spitze {0}').format(fmt(peak)) if peak else _("keine Daten"), w - 10, y + 5,
                       size=9, color=(*dc, 1), align=1.0)
 
         lanes_bottom = h - self.AXIS
@@ -172,7 +175,7 @@ class Timeline(Gtk.DrawingArea):
             # auf lokale Zeit ausrichten
             off = time.localtime(first).tm_gmtoff
             first = ((int(self.t0 + off) // step) + 1) * step - off
-        fmt = "%H:%M:%S" if step < 60 else ("%H:%M" if span <= 86400 else "%d.%m. %H:%M")
+        fmt = "%H:%M:%S" if step < 60 else ("%H:%M" if span <= 86400 else util.date_fmt("day") + " %H:%M")
         cr.set_line_width(1)
         t = first
         while t < self.t1:
@@ -300,7 +303,7 @@ class Timeline(Gtk.DrawingArea):
 
 
 class FlightTab(Tab):
-    title = "Flight Recorder"
+    title = _("Flight Recorder")
 
     def __init__(self, app):
         super().__init__(app)
@@ -317,14 +320,14 @@ class FlightTab(Tab):
 
         # Kopfzeile
         head = Gtk.Box(spacing=12)
-        head.pack_start(styled_label("Flight Recorder", "tm-h1"), False, False, 0)
+        head.pack_start(styled_label(_("Flight Recorder"), "tm-h1"), False, False, 0)
         self.rec_chip = styled_label("", "tm-chip")
         head.pack_start(self.rec_chip, False, False, 0)
         self.rec_switch = Gtk.Switch(active=self.app.settings.get("fr_enabled", True))
         self.rec_switch.set_valign(Gtk.Align.CENTER)
         self.rec_switch.connect("notify::active", self._on_switch)
         head.pack_end(self.rec_switch, False, False, 0)
-        head.pack_end(styled_label("Aufzeichnen", "tm-dim"), False, False, 0)
+        head.pack_end(styled_label(_("Aufzeichnen"), "tm-dim"), False, False, 0)
         self.db_label = styled_label("", "tm-dim")
         outer.pack_start(head, False, False, 0)
 
@@ -350,25 +353,25 @@ class FlightTab(Tab):
         def icon_btn(icon, tip, cb):
             b = Gtk.Button.new_from_icon_name(icon, Gtk.IconSize.BUTTON)
             b.set_tooltip_text(tip)
-            b.connect("clicked", lambda *_: cb())
+            b.connect("clicked", lambda *_xx: cb())
             ctl.pack_start(b, False, False, 0)
             return b
 
-        icon_btn("media-skip-backward-symbolic", "Vorheriges Ereignis", lambda: self.jump_event(False))
-        icon_btn("media-seek-backward-symbolic", "Zurück", lambda: self.step(-1))
-        self.play_btn = icon_btn("media-playback-start-symbolic", "Abspielen / Pause", self.toggle_play)
-        icon_btn("media-seek-forward-symbolic", "Vor", lambda: self.step(1))
-        icon_btn("media-skip-forward-symbolic", "Nächstes Ereignis", lambda: self.jump_event(True))
+        icon_btn("media-skip-backward-symbolic", _("Vorheriges Ereignis"), lambda: self.jump_event(False))
+        icon_btn("media-seek-backward-symbolic", _("Zurück"), lambda: self.step(-1))
+        self.play_btn = icon_btn("media-playback-start-symbolic", _("Abspielen / Pause"), self.toggle_play)
+        icon_btn("media-seek-forward-symbolic", _("Vor"), lambda: self.step(1))
+        icon_btn("media-skip-forward-symbolic", _("Nächstes Ereignis"), lambda: self.jump_event(True))
         bar.pack_start(ctl, False, False, 0)
         self.speed_combo = Gtk.ComboBoxText()
         for label, v in SPEEDS:
             self.speed_combo.append(str(v), label)
         self.speed_combo.set_active_id(str(self.speed))
-        self.speed_combo.set_tooltip_text("Abspielgeschwindigkeit")
+        self.speed_combo.set_tooltip_text(_("Abspielgeschwindigkeit"))
         self.speed_combo.connect("changed", lambda c: setattr(self, "speed", int(c.get_active_id())))
         bar.pack_start(self.speed_combo, False, False, 0)
-        self.live_btn = Gtk.Button(label="● LIVE")
-        self.live_btn.connect("clicked", lambda *_: self.go_live())
+        self.live_btn = Gtk.Button(label=_("● LIVE"))
+        self.live_btn.connect("clicked", lambda *_xx: self.go_live())
         bar.pack_start(self.live_btn, False, False, 0)
 
         self.time_big = styled_label("", "tm-big", xalign=1)
@@ -385,10 +388,10 @@ class FlightTab(Tab):
         self.timeline = Timeline()
         self.timeline.on_seek = self.seek
         self.timeline.on_zoom = self.zoom
-        self.timeline.connect("size-allocate", lambda *_: self._schedule_reload())
+        self.timeline.connect("size-allocate", lambda *_xx: self._schedule_reload())
         tl_card.pack_start(self.timeline, True, True, 0)
-        tl_card.pack_start(styled_label("Klicken/Ziehen: Zeitpunkt wählen  ·  Mausrad: zoomen  ·  "
-                                        "Umschalt+Mausrad: verschieben  ·  ◆ = Ereignis", "tm-dim"),
+        tl_card.pack_start(styled_label(_("Klicken/Ziehen: Zeitpunkt wählen  ·  Mausrad: zoomen  ·  "
+                                        "Umschalt+Mausrad: verschieben  ·  ◆ = Ereignis"), "tm-dim"),
                            False, False, 0)
         outer.pack_start(tl_card, False, False, 0)
 
@@ -397,7 +400,7 @@ class FlightTab(Tab):
         state = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         state.get_style_context().add_class("tm-card")
         sh = Gtk.Box()
-        self.state_title = styled_label("ZUSTAND", "tm-card-title")
+        self.state_title = styled_label(_("ZUSTAND"), "tm-card-title")
         sh.pack_start(self.state_title, False, False, 0)
         self.state_note = styled_label("", "tm-dim", xalign=1)
         sh.pack_end(self.state_note, False, False, 0)
@@ -405,9 +408,9 @@ class FlightTab(Tab):
         tiles = Gtk.Grid(column_spacing=24, row_spacing=8, column_homogeneous=True)
         self.tiles = {}
         for i, (key, caption) in enumerate((
-                ("cpu", "CPU"), ("mem", "Arbeitsspeicher"), ("swap", "Swap"), ("gpu", "GPU"),
-                ("temp", "Temperatur"), ("freq", "Takt"), ("read", "Lesen"), ("write", "Schreiben"),
-                ("rx", "Empfangen"), ("tx", "Senden"), ("bat", "Akku / Leistung"), ("load", "Last / Prozesse"))):
+                ("cpu", _("CPU")), ("mem", _("Arbeitsspeicher")), ("swap", _("Swap")), ("gpu", _("GPU")),
+                ("temp", _("Temperatur")), ("freq", _("Takt")), ("read", _("Lesen")), ("write", _("Schreiben")),
+                ("rx", _("Empfangen")), ("tx", _("Senden")), ("bat", _("Akku / Leistung")), ("load", _("Last / Prozesse")))):
             cell = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             cell.pack_start(styled_label(caption, "tm-dim"), False, False, 0)
             v = styled_label("–", "tm-mid")
@@ -419,7 +422,7 @@ class FlightTab(Tab):
         self.pstore = Gtk.ListStore(GdkPixbuf.Pixbuf, str, int, str, float, float, float)
         pv = Gtk.TreeView(model=self.pstore)
         pv.set_tooltip_column(-1)
-        col = Gtk.TreeViewColumn("Prozess (Top nach CPU, RAM, E/A)")
+        col = Gtk.TreeViewColumn(_("Prozess (Top nach CPU, RAM, E/A)"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "pixbuf", 0)
@@ -429,16 +432,16 @@ class FlightTab(Tab):
         col.set_expand(True)
         col.set_sort_column_id(1)
         pv.append_column(col)
-        c = Gtk.TreeViewColumn("PID", Gtk.CellRendererText(xalign=1), text=2)
+        c = Gtk.TreeViewColumn(_("PID"), Gtk.CellRendererText(xalign=1), text=2)
         c.set_sort_column_id(2)
         pv.append_column(c)
-        c = Gtk.TreeViewColumn("Benutzer", Gtk.CellRendererText(), text=3)
+        c = Gtk.TreeViewColumn(_("Benutzer"), Gtk.CellRendererText(), text=3)
         c.set_sort_column_id(3)
         pv.append_column(c)
         total = self.app.mem_total
-        for title, colid, fmt, scale in (("CPU (Ø 5 s)", 4, lambda v: util.pct(v, 1), lambda v: v / 100),
-                                         ("Arbeitsspeicher", 5, util.mb, lambda v: v / (total * 0.15)),
-                                         ("Datenträger", 6, util.rate, lambda v: v / (20 * 1048576))):
+        for title, colid, fmt, scale in ((_("CPU (Ø 5 s)"), 4, lambda v: util.pct(v, 1), lambda v: v / 100),
+                                         (_("Arbeitsspeicher"), 5, util.mb, lambda v: v / (total * 0.15)),
+                                         (_("Datenträger"), 6, util.rate, lambda v: v / (20 * 1048576))):
             cell = Gtk.CellRendererText(xalign=1)
             c = Gtk.TreeViewColumn(title, cell)
             c.set_cell_data_func(cell, heat_cell_func(colid, fmt, scale))
@@ -457,7 +460,7 @@ class FlightTab(Tab):
         ev = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         ev.get_style_context().add_class("tm-card")
         eh = Gtk.Box()
-        eh.pack_start(styled_label("EREIGNISSE IM ZEITRAUM", "tm-card-title"), False, False, 0)
+        eh.pack_start(styled_label(_("EREIGNISSE IM ZEITRAUM"), "tm-card-title"), False, False, 0)
         self.ev_count = styled_label("", "tm-dim", xalign=1)
         eh.pack_end(self.ev_count, False, False, 0)
         ev.pack_start(eh, False, False, 0)
@@ -477,28 +480,28 @@ class FlightTab(Tab):
 
         # Einstellungen
         foot = Gtk.Box(spacing=10)
-        foot.pack_start(styled_label("Aufbewahren:", "tm-dim"), False, False, 0)
+        foot.pack_start(styled_label(_("Aufbewahren:"), "tm-dim"), False, False, 0)
         self.ret = Gtk.ComboBoxText()
         for label, hours in RETENTIONS:
             self.ret.append(str(hours), label)
         self.ret.set_active_id(str(self.app.settings.get("fr_retention_h", 24)))
         self.ret.connect("changed", self._on_retention)
         foot.pack_start(self.ret, False, False, 0)
-        self.daemon_check = Gtk.CheckButton(label="Im Hintergrund aufzeichnen")
-        self.daemon_check.set_tooltip_text("Auch ohne offenes Fenster aufzeichnen: startet einen kleinen "
-                                           "Hintergrunddienst, auch automatisch beim Anmelden")
+        self.daemon_check = Gtk.CheckButton(label=_("Im Hintergrund aufzeichnen"))
+        self.daemon_check.set_tooltip_text(_("Auch ohne offenes Fenster aufzeichnen: startet einen kleinen "
+                                           "Hintergrunddienst, auch automatisch beim Anmelden"))
         self.daemon_check.set_active(os.path.exists(AUTOSTART))
         self.daemon_check.connect("toggled", self._on_daemon)
         foot.pack_start(self.daemon_check, False, False, 10)
         foot.pack_start(self.db_label, False, False, 6)
-        clear = Gtk.Button(label="Löschen")
-        clear.set_tooltip_text("Gesamte Aufzeichnung löschen")
+        clear = Gtk.Button(label=_("Löschen"))
+        clear.set_tooltip_text(_("Gesamte Aufzeichnung löschen"))
         clear.get_style_context().add_class("tm-danger")
-        clear.connect("clicked", lambda *_: self._clear())
+        clear.connect("clicked", lambda *_xx: self._clear())
         foot.pack_end(clear, False, False, 0)
         export = Gtk.Button(label="CSV-Export…")
-        export.set_tooltip_text("Sichtbaren Zeitraum als CSV-Datei exportieren")
-        export.connect("clicked", lambda *_: self._export())
+        export.set_tooltip_text(_("Sichtbaren Zeitraum als CSV-Datei exportieren"))
+        export.connect("clicked", lambda *_xx: self._export())
         foot.pack_end(export, False, False, 0)
         outer.pack_start(foot, False, False, 0)
 
@@ -529,7 +532,7 @@ class FlightTab(Tab):
 
     def _effective_span(self):
         if self.span is None:
-            first, _, _ = self.reader.bounds()
+            first, _x, _x = self.reader.bounds()
             return max(300.0, time.time() - first) if first else 900.0
         return self.span
 
@@ -556,7 +559,7 @@ class FlightTab(Tab):
         tl.n = n
         tl.queue_draw()
         self._fill_events(tl.events)
-        set_text(self.db_label, f"Datenbank {util.size(Reader.db_size())}")
+        set_text(self.db_label, _('Datenbank {0}').format(util.size(Reader.db_size())))
 
     def _fill_events(self, events):
         sig = (len(events), events[-1][0] if events else 0)
@@ -575,14 +578,14 @@ class FlightTab(Tab):
             dot.set_markup(f"<span foreground='#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}'>◆</span>")
             box.pack_start(dot, False, False, 0)
             vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-            vb.pack_start(styled_label(time.strftime("%d.%m. %H:%M:%S", time.localtime(ts)), "tm-dim"),
+            vb.pack_start(styled_label(time.strftime(util.date_fmt("day") + " %H:%M:%S", time.localtime(ts)), "tm-dim"),
                           False, False, 0)
             t = styled_label(text, wrap=True, max_width_chars=40)
             t.set_line_wrap(True)
             vb.pack_start(t, False, False, 0)
             box.pack_start(vb, True, True, 0)
             row.add(box)
-            row.set_tooltip_text("Klicken, um zu diesem Zeitpunkt zu springen")
+            row.set_tooltip_text(_("Klicken, um zu diesem Zeitpunkt zu springen"))
             self.ev_list.add(row)
         self.ev_list.show_all()
         set_text(self.ev_count, f"{len(events)}")
@@ -646,7 +649,7 @@ class FlightTab(Tab):
         self.stop_play()
         ts = self.reader.adjacent_event(self.timeline.playhead, forward)
         if ts is None:
-            set_text(self.state_note, "Kein weiteres Ereignis")
+            set_text(self.state_note, _("Kein weiteres Ereignis"))
             return
         self.seek(ts, keep_live=False)
 
@@ -712,15 +715,15 @@ class FlightTab(Tab):
         self._panel_pending = False
         ts = self.timeline.playhead
         set_text(self.time_big, fmt_time(ts))
-        set_text(self.time_ago, "LIVE" if self.live else ago(ts))
+        set_text(self.time_ago, _("LIVE") if self.live else ago(ts))
         s = self.reader.sample_at(ts)
         t = self.tiles
         if s is None:
             for v in t.values():
                 set_text(v, "–")
-            set_text(self.state_note, "Keine Aufzeichnung zu diesem Zeitpunkt")
+            set_text(self.state_note, _("Keine Aufzeichnung zu diesem Zeitpunkt"))
         else:
-            set_text(self.state_note, "Messwert von " + time.strftime("%H:%M:%S", time.localtime(s["ts"])))
+            set_text(self.state_note, _("Messwert von ") + time.strftime("%H:%M:%S", time.localtime(s["ts"])))
             set_text(t["cpu"], util.pct(s["cpu"]))
             set_text(t["mem"], f"{util.pct(s['mem'])} · {util.size(s['mem_used'])}" if s["mem_used"]
                      else util.pct(s["mem"]))
@@ -732,7 +735,7 @@ class FlightTab(Tab):
             set_text(t["write"], util.rate(s["disk_w"]))
             set_text(t["rx"], util.bits(s["net_rx"]))
             set_text(t["tx"], util.bits(s["net_tx"]))
-            bat = f"{int(s['bat'])} %" if s["bat"] is not None else "–"
+            bat = util.pct(s["bat"]) if s["bat"] is not None else "–"
             if s["watts"]:
                 bat += f" · {util.num(s['watts'], 1)} W"
             set_text(t["bat"], bat)
@@ -742,30 +745,37 @@ class FlightTab(Tab):
         for pid, name, user, cpu, mem, io, cmd in rows:
             self.pstore.append([icons.for_process(name), name, pid, user or "", cpu or 0.0,
                                 float(mem or 0), float(io or 0)])
-        set_text(self.state_title, f"ZUSTAND UM {time.strftime('%H:%M:%S', time.localtime(ts))}")
+        set_text(self.state_title, _('ZUSTAND UM {0}').format(time.strftime('%H:%M:%S', time.localtime(ts))))
         return False
 
     def _update_status(self):
         holder = self.recorder.holder()
         if not self.app.settings.get("fr_enabled", True) and self.recorder.active:
-            text = "⏸ PAUSIERT"
+            text = _("⏸ PAUSIERT")
         elif self.recorder.active:
-            text = "● REC"
+            text = _("● REC")
+        elif holder and not self._recent_sample():
+            text = _("⏸ PAUSIERT (anderes Fenster)") if holder[0] == "gui" else _("⏸ PAUSIERT (Hintergrunddienst)")
         elif holder and holder[0] == "daemon":
-            text = "● REC (Hintergrunddienst)"
+            text = _("● REC (Hintergrunddienst)")
         elif holder:
-            text = "● REC (anderes Fenster)"
+            text = _("● REC (anderes Fenster)")
         else:
-            text = "○ keine Aufzeichnung"
+            text = _("○ keine Aufzeichnung")
         set_text(self.rec_chip, text)
         self.rec_switch.set_sensitive(self.recorder.active)
+
+    def _recent_sample(self):
+        """Gab es in den letzten 15 s einen Messwert? (sonst pausiert der andere Prozess)"""
+        _first, last, _n = self.reader.bounds()
+        return last is not None and time.time() - last < 15
 
     # --------------------------------------------------------- Einstellungen
     def _on_switch(self, sw, pspec):
         self.app.settings["fr_enabled"] = sw.get_active()
         if self.recorder.active:
-            self.recorder.event("info", "pause", "Aufzeichnung fortgesetzt" if sw.get_active()
-                                else "Aufzeichnung pausiert")
+            self.recorder.event("info", "pause", _("Aufzeichnung fortgesetzt") if sw.get_active()
+                                else _("Aufzeichnung pausiert"))
         self._update_status()
 
     def _on_retention(self, combo):
@@ -777,10 +787,7 @@ class FlightTab(Tab):
             os.makedirs(os.path.dirname(AUTOSTART), exist_ok=True)
             exe = os.path.join(PROJECT_DIR, "taskmanager.sh")
             with open(AUTOSTART, "w") as f:
-                f.write("[Desktop Entry]\nType=Application\nName=Taskmanager Flight Recorder\n"
-                        "Comment=Zeichnet Systemdaten für den Flight Recorder im Hintergrund auf\n"
-                        f"Exec=\"{exe}\" --recorder\nIcon=media-record\nTerminal=false\n"
-                        "NoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n")
+                f.write(_('[Desktop Entry]\nType=Application\nName=Taskmanager Flight Recorder\nComment=Zeichnet Systemdaten für den Flight Recorder im Hintergrund auf\nExec="{0}" --recorder\nIcon=media-record\nTerminal=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n').format(exe))
             # gleich starten – übernimmt die Aufzeichnung, sobald dieses Fenster geschlossen wird
             subprocess.Popen([sys.executable, "-m", "taskmanager", "--recorder"], cwd=PROJECT_DIR,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -803,25 +810,25 @@ class FlightTab(Tab):
 
     def _clear(self):
         if not self.recorder.active:
-            actions.message(self.app.window, "Löschen nicht möglich",
-                            "Die Aufzeichnung gehört gerade einem anderen Prozess (Hintergrunddienst).")
+            actions.message(self.app.window, _("Löschen nicht möglich"),
+                            _("Die Aufzeichnung gehört gerade einem anderen Prozess (Hintergrunddienst)."))
             return
-        if actions.confirm(self.app.window, "Gesamte Aufzeichnung löschen?",
-                           "Alle Messwerte, Prozess-Schnappschüsse und Ereignisse werden entfernt.",
-                           "Löschen"):
+        if actions.confirm(self.app.window, _("Gesamte Aufzeichnung löschen?"),
+                           _("Alle Messwerte, Prozess-Schnappschüsse und Ereignisse werden entfernt."),
+                           _("Löschen")):
             self.recorder.clear()
             GLib.timeout_add(2500, lambda: self.go_live() or False)
 
     def _export(self):
-        fc = Gtk.FileChooserNative.new("Zeitraum als CSV exportieren", self.app.window,
-                                       Gtk.FileChooserAction.SAVE, "Exportieren", None)
+        fc = Gtk.FileChooserNative.new(_("Zeitraum als CSV exportieren"), self.app.window,
+                                       Gtk.FileChooserAction.SAVE, _("Exportieren"), None)
         fc.set_current_name(time.strftime("flight-recorder-%Y%m%d-%H%M.csv"))
         fc.set_do_overwrite_confirmation(True)
         if fc.run() == Gtk.ResponseType.ACCEPT:
             try:
                 self.reader.export_csv(fc.get_filename(), self.timeline.t0, self.timeline.t1)
             except OSError as e:
-                actions.message(self.app.window, "Export fehlgeschlagen", str(e))
+                actions.message(self.app.window, _("Export fehlgeschlagen"), str(e))
 
 
 def _daemon_pids():

@@ -1,9 +1,13 @@
 """Hauptanwendung: Kopfleiste, Seitenleiste, Seiten, Farbschemata, Mini-Modus."""
 
+import os
+import sys
+
 import psutil
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from . import actions, sysinfo, theme, util
+from . import actions, i18n, sysinfo, theme, util
+from .i18n import _
 from .history import AppHistory
 from .mini import MiniWindow
 from .sampler import Sampler
@@ -23,24 +27,25 @@ from .tabs.storage import StorageTab
 from .tabs.users import UsersTab
 from .widgets import styled_label
 
-APP_ID = "de.local.LinuxTaskmanager"
-VERSION = "2.2"
-SPEEDS = [("Hoch", 0.5), ("Normal", 1.0), ("Niedrig", 4.0)]
+# per Umgebungsvariable änderbar (z. B. für Tests neben einer laufenden Instanz)
+APP_ID = os.environ.get("TASKMANAGER_APP_ID", "de.local.LinuxTaskmanager")
+VERSION = "2.3"
+SPEEDS = [(_("Hoch"), 0.5), (_("Normal"), 1.0), (_("Niedrig"), 4.0)]
 
 # (Name, Klasse, Titel, Symbol)
 PAGES = [
-    ("overview", OverviewTab, "Übersicht", "view-grid-symbolic"),
-    ("processes", ProcessesTab, "Prozesse", "view-list-symbolic"),
-    ("performance", PerformanceTab, "Leistung", "power-profile-performance-symbolic"),
-    ("flight", FlightTab, "Flight Recorder", "media-record-symbolic"),
-    ("benchmark", BenchmarkTab, "CPU-Benchmark", "speedometer-symbolic"),
-    ("storage", StorageTab, "Speicherplatz", "drive-harddisk-symbolic"),
-    ("connections", ConnectionsTab, "Verbindungen", "network-transmit-receive-symbolic"),
-    ("apphistory", AppHistoryTab, "App-Verlauf", "document-open-recent-symbolic"),
-    ("startup", StartupTab, "Autostart", "system-run-symbolic"),
-    ("users", UsersTab, "Benutzer", "system-users-symbolic"),
-    ("details", DetailsTab, "Details", "format-justify-fill-symbolic"),
-    ("services", ServicesTab, "Dienste", "emblem-system-symbolic"),
+    ("overview", OverviewTab, _("Übersicht"), "view-grid-symbolic"),
+    ("processes", ProcessesTab, _("Prozesse"), "view-list-symbolic"),
+    ("performance", PerformanceTab, _("Leistung"), "power-profile-performance-symbolic"),
+    ("flight", FlightTab, _("Flight Recorder"), "media-record-symbolic"),
+    ("benchmark", BenchmarkTab, _("CPU-Benchmark"), "speedometer-symbolic"),
+    ("storage", StorageTab, _("Speicherplatz"), "drive-harddisk-symbolic"),
+    ("connections", ConnectionsTab, _("Verbindungen"), "network-transmit-receive-symbolic"),
+    ("apphistory", AppHistoryTab, _("App-Verlauf"), "document-open-recent-symbolic"),
+    ("startup", StartupTab, _("Autostart"), "system-run-symbolic"),
+    ("users", UsersTab, i18n.C_("Seite", "Benutzer"), "system-users-symbolic"),
+    ("details", DetailsTab, _("Details"), "format-justify-fill-symbolic"),
+    ("services", ServicesTab, _("Dienste"), "emblem-system-symbolic"),
 ]
 
 
@@ -81,7 +86,7 @@ class TaskManager(Gtk.Application):
     # ------------------------------------------------------------- Fenster
     def _build_window(self):
         s = self.settings
-        win = self.window = Gtk.ApplicationWindow(application=self, title="Taskmanager")
+        win = self.window = Gtk.ApplicationWindow(application=self, title=_("Taskmanager"))
         win.get_style_context().add_class("tm-root")
         win.set_icon_name("utilities-system-monitor")
         # Startgröße an den nutzbaren Bildschirmbereich anpassen (z. B. 1280×720)
@@ -100,33 +105,33 @@ class TaskManager(Gtk.Application):
 
         # Kopfleiste
         hb = self.headerbar = Gtk.HeaderBar(show_close_button=True)
-        hb.set_title("TASKMANAGER")
+        hb.set_title(_("TASKMANAGER"))
         win.set_titlebar(hb)
         menu_btn = Gtk.MenuButton()
         menu_btn.set_image(Gtk.Image.new_from_icon_name("open-menu-symbolic", Gtk.IconSize.BUTTON))
-        menu_btn.set_tooltip_text("Menü")
+        menu_btn.set_tooltip_text(_("Menü"))
         menu_btn.set_popup(self._build_menu())
         hb.pack_end(menu_btn)
         mini_btn = Gtk.Button.new_from_icon_name("view-restore-symbolic", Gtk.IconSize.BUTTON)
-        mini_btn.set_tooltip_text("Mini-Modus (Strg+M)")
-        mini_btn.connect("clicked", lambda *_: self.toggle_mini(True))
+        mini_btn.set_tooltip_text(_("Mini-Modus (Strg+M)"))
+        mini_btn.connect("clicked", lambda *_xx: self.toggle_mini(True))
         hb.pack_end(mini_btn)
         refresh = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
-        refresh.set_tooltip_text("Jetzt aktualisieren (F5)")
-        refresh.connect("clicked", lambda *_: self.refresh_now())
+        refresh.set_tooltip_text(_("Jetzt aktualisieren (F5)"))
+        refresh.connect("clicked", lambda *_xx: self.refresh_now())
         hb.pack_end(refresh)
         new_task = Gtk.Button.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON)
-        new_task.set_tooltip_text("Neuen Task ausführen (Strg+N)")
-        new_task.connect("clicked", lambda *_: actions.run_new_task(self.window))
+        new_task.set_tooltip_text(_("Neuen Task ausführen (Strg+N)"))
+        new_task.connect("clicked", lambda *_xx: actions.run_new_task(self.window))
         hb.pack_start(new_task)
-        self.rec_chip = Gtk.Button(label="● REC")
+        self.rec_chip = Gtk.Button(label=_("● REC"))
         self.rec_chip.set_relief(Gtk.ReliefStyle.NONE)
         self.rec_chip.get_style_context().add_class("tm-rec")
-        self.rec_chip.set_tooltip_text("Flight Recorder zeichnet auf – klicken zum Öffnen")
-        self.rec_chip.connect("clicked", lambda *_: self.show_page("flight"))
+        self.rec_chip.set_tooltip_text(_("Flight Recorder zeichnet auf – klicken zum Öffnen"))
+        self.rec_chip.connect("clicked", lambda *_xx: self.show_page("flight"))
         self.rec_chip.set_no_show_all(True)
         hb.pack_start(self.rec_chip)
-        self.paused_chip = styled_label("⏸ ANGEHALTEN", "tm-chip")
+        self.paused_chip = styled_label(_("⏸ ANGEHALTEN"), "tm-chip")
         self.paused_chip.set_no_show_all(True)
         hb.pack_start(self.paused_chip)
 
@@ -150,8 +155,8 @@ class TaskManager(Gtk.Application):
         side.get_style_context().add_class("tm-sidebar")
         side.set_size_request(205, -1)
         brand = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, margin=16, margin_bottom=8)
-        brand.pack_start(styled_label("◢ TASK", "tm-brand"), False, False, 0)
-        brand.pack_start(styled_label("MANAGER  ·  LINUX", "tm-brand-sub"), False, False, 0)
+        brand.pack_start(styled_label(_("◢ TASK"), "tm-brand"), False, False, 0)
+        brand.pack_start(styled_label(_("MANAGER  ·  LINUX"), "tm-brand-sub"), False, False, 0)
         side.pack_start(brand, False, False, 0)
         self.nav = Gtk.ListBox()
         self.nav.set_selection_mode(Gtk.SelectionMode.BROWSE)
@@ -167,7 +172,7 @@ class TaskManager(Gtk.Application):
                 hint.set_opacity(0.5)
                 box.pack_end(hint, False, False, 0)
             row.add(box)
-            row.set_tooltip_text(f"{title} (Strg+{(i + 1) % 10})")
+            row.set_tooltip_text(_('{0} (Strg+{1})').format(title, (i + 1) % 10))
             self.nav.add(row)
             self.nav_rows[name] = row
         self.nav.connect("row-selected", self._on_nav)
@@ -207,13 +212,13 @@ class TaskManager(Gtk.Application):
                 child = mi.get_child()
                 key, mods = Gtk.accelerator_parse(accel)
                 child.set_accel(key, mods)
-            mi.connect("activate", lambda *_: cb())
+            mi.connect("activate", lambda *_xx: cb())
             parent.append(mi)
             return mi
 
-        item("_Neuen Task ausführen…", lambda: actions.run_new_task(self.window), accel="<Control>n")
-        item("_Mini-Modus", lambda: self.toggle_mini(True), accel="<Control>m")
-        item("_Jetzt aktualisieren", self.refresh_now, accel="F5")
+        item(_("_Neuen Task ausführen…"), lambda: actions.run_new_task(self.window), accel="<Control>n")
+        item(_("_Mini-Modus"), lambda: self.toggle_mini(True), accel="<Control>m")
+        item(_("_Jetzt aktualisieren"), self.refresh_now, accel="F5")
         menu.append(Gtk.SeparatorMenuItem())
 
         def radio_sub(label, options, current, on_select):
@@ -229,10 +234,12 @@ class TaskManager(Gtk.Application):
             top.set_submenu(sub)
             menu.append(top)
 
-        radio_sub("_Farbschema", [(n, n) for n in theme.PALETTES], self.settings["theme"], self.set_theme)
+        radio_sub(_("_Farbschema"), [(_(n), n) for n in theme.PALETTES], self.settings["theme"], self.set_theme)
+        radio_sub(_("_Sprache / Language"), [(_(label), key) for key, label in i18n.LANGUAGES],
+                  self.settings.get("language", "auto"), self._set_language)
         current = None if self.settings["paused"] else self.settings["interval"]
-        radio_sub("_Aktualisierungsgeschwindigkeit",
-                  [(f"{l} ({util.num(v, 1 if v < 1 else 0)} s)", v) for l, v in SPEEDS] + [("Angehalten", None)],
+        radio_sub(_("_Aktualisierungsgeschwindigkeit"),
+                  [(f"{l} ({util.num(v, 1 if v < 1 else 0)} s)", v) for l, v in SPEEDS] + [(_("Angehalten"), None)],
                   current, self._set_speed)
 
         def check(label, key, cb):
@@ -241,11 +248,11 @@ class TaskManager(Gtk.Application):
             ci.connect("toggled", lambda w: cb(w.get_active()))
             menu.append(ci)
 
-        check("Prozesse nach _Typ gruppieren", "group_by_type", self._set_group)
-        check("_Immer im Vordergrund", "always_on_top", self._set_on_top)
+        check(_("Prozesse nach _Typ gruppieren"), "group_by_type", self._set_group)
+        check(_("_Immer im Vordergrund"), "always_on_top", self._set_on_top)
         menu.append(Gtk.SeparatorMenuItem())
-        item("Ü_ber Taskmanager", self._about)
-        item("_Beenden", self.quit, accel="<Control>q")
+        item(_("Ü_ber Taskmanager"), self._about)
+        item(_("_Beenden"), self.quit, accel="<Control>q")
         menu.show_all()
         return menu
 
@@ -283,8 +290,7 @@ class TaskManager(Gtk.Application):
         if name not in (None, "performance", "overview", "benchmark"):
             self.tabs[name].update(snap)
         self.headerbar.set_subtitle(
-            f"{self.host}   ·   CPU {util.pct(snap.cpu)}   ·   RAM {util.pct(snap.vm.percent)}   ·   "
-            f"{len(snap.procs)} Prozesse   ·   Betriebszeit {util.uptime_text(snap.uptime)}")
+            _('{0}   ·   CPU {1}   ·   RAM {2}   ·   {3} Prozesse   ·   Betriebszeit {4}').format(self.host, util.pct(snap.cpu), util.pct(snap.vm.percent), len(snap.procs), util.uptime_text(snap.uptime)))
         return False
 
     def refresh_now(self):
@@ -322,7 +328,42 @@ class TaskManager(Gtk.Application):
 
     def _update_paused(self):
         self.paused_chip.set_visible(self.sampler.paused)
-        self.paused_chip.set_tooltip_text("Aktualisierung angehalten – F5 aktualisiert einmalig")
+        self.paused_chip.set_tooltip_text(_("Aktualisierung angehalten – F5 aktualisiert einmalig"))
+
+    def _set_language(self, choice):
+        if choice == self.settings.get("language", "auto"):
+            return
+        self.settings["language"] = choice
+        new = i18n.system_language() if choice == "auto" else choice
+        if new == i18n.LANG:
+            self.settings.save()
+            return
+        # Hinweis in beiden Sprachen, da die Oberfläche noch die alte Sprache zeigt
+        d = Gtk.MessageDialog(transient_for=self.window, modal=True, message_type=Gtk.MessageType.QUESTION,
+                              buttons=Gtk.ButtonsType.NONE,
+                              text="Neustart erforderlich / Restart required")
+        d.format_secondary_text("Die Sprache wird nach einem Neustart des Taskmanagers übernommen.\n"
+                                "The language will change after restarting the Task Manager.")
+        d.add_button("Später / Later", Gtk.ResponseType.CANCEL)
+        d.add_button("Jetzt neu starten / Restart now", Gtk.ResponseType.OK)
+        d.set_default_response(Gtk.ResponseType.OK)
+        r = d.run()
+        d.destroy()
+        self.settings.save()
+        if r == Gtk.ResponseType.OK:
+            self.restart()
+
+    def restart(self):
+        """Programm sauber beenden und im selben Prozess neu starten."""
+        self.settings["page"] = self.current_name
+        self.settings.save()
+        self.history.save()
+        self.benchmark.shutdown()
+        self.sampler.stop()
+        self.recorder.close()
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        os.chdir(root)
+        os.execv(sys.executable, [sys.executable, "-m", "taskmanager"])
 
     def _set_group(self, active):
         self.settings["group_by_type"] = active
@@ -351,15 +392,15 @@ class TaskManager(Gtk.Application):
 
     def _about(self):
         d = Gtk.AboutDialog(transient_for=self.window, modal=True)
-        d.set_program_name("Taskmanager für Linux")
+        d.set_program_name(_("Taskmanager für Linux"))
         d.set_version(VERSION)
         d.set_logo_icon_name("utilities-system-monitor")
-        d.set_copyright("© 2026 vanhake")
+        d.set_copyright(_("© 2026 vanhake"))
         d.set_license_type(Gtk.License.GPL_3_0)
         d.set_website("https://github.com/vanhake/LinuxTaskManager")
-        d.set_website_label("Projekt auf GitHub")
-        d.set_comments("Prozesse, Leistung, Speicherplatz, Verbindungen, Autostart, Benutzer und "
-                       "Dienste im Blick – inspiriert vom Windows-Taskmanager und TMOG.")
+        d.set_website_label(_("Projekt auf GitHub"))
+        d.set_comments(_("Prozesse, Leistung, Speicherplatz, Verbindungen, Autostart, Benutzer und "
+                       "Dienste im Blick – inspiriert vom Windows-Taskmanager und TMOG."))
         d.run()
         d.destroy()
 
@@ -402,6 +443,6 @@ class TaskManager(Gtk.Application):
 
 def main():
     GLib.set_prgname("taskmanager")
-    GLib.set_application_name("Taskmanager")
+    GLib.set_application_name(_("Taskmanager"))
     app = TaskManager()
     return app.run(None)

@@ -43,14 +43,17 @@ ln -sf "$DIR/taskmanager.sh" "$BIN"
 cat > "$DESKTOP" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Taskmanager
-GenericName=Taskmanager
-Comment=Prozesse, Leistung, Autostart, Benutzer und Dienste überwachen
+Name=Task Manager
+Name[de]=Taskmanager
+GenericName=Task Manager
+GenericName[de]=Taskmanager
+Comment=Monitor processes, performance, startup apps, users and services
+Comment[de]=Prozesse, Leistung, Autostart, Benutzer und Dienste überwachen
 Exec=$BIN
 Icon=utilities-system-monitor
 Terminal=false
 Categories=System;Monitor;GTK;
-Keywords=task;manager;prozess;process;cpu;ram;speicher;dienste;
+Keywords=task;manager;taskmanager;prozess;process;cpu;ram;speicher;memory;dienste;services;
 StartupWMClass=Taskmanager
 EOF
 update-desktop-database "$(dirname "$DESKTOP")" 2>/dev/null || true

@@ -1,5 +1,7 @@
 """Registerkarte „Leistung“: CPU, Arbeitsspeicher, Datenträger, Netzwerk, GPU."""
 
+from ..i18n import _
+
 import math
 import time
 
@@ -82,7 +84,7 @@ class DevicePage:
 
     def set_interval(self, interval):
         if hasattr(self, "time_label"):
-            self.time_label.set_text(f"{util.num(HISTORY * interval, 0)} Sekunden")
+            self.time_label.set_text(_('{0} Sekunden').format(util.num(HISTORY * interval, 0)))
 
     def add_dyn(self, key, caption, columns=3):
         i = self._dyn_count
@@ -145,7 +147,7 @@ class Device:
 
 
 class PerformanceTab(Tab):
-    title = "Leistung"
+    title = _("Leistung")
 
     def __init__(self, app):
         super().__init__(app)
@@ -175,7 +177,7 @@ class PerformanceTab(Tab):
         self._build_mem()
         for i, name in enumerate(self.app.sampler.disks):
             self._build_disk(i, name)
-        self.net_count = {"Ethernet": 0, "WLAN": 0, "Virtuell": 0}
+        self.net_count = {_("Ethernet"): 0, _("WLAN"): 0, _("Virtuell"): 0}
         for name in self.app.sampler.adapters:
             self._build_net(name)
         for i, g in enumerate(self.app.sampler.gpus):
@@ -211,13 +213,13 @@ class PerformanceTab(Tab):
     def _build_cpu(self):
         info = self.cpu_info = sysinfo.cpu_info()
         color = COLORS["cpu"]
-        page = DevicePage("CPU", info["model"], color)
+        page = DevicePage(_("CPU"), info["model"], color)
         self.cpu_graph = Graph(color)
         # Umschalten Gesamt / logische Prozessoren
         switch_box = Gtk.Box(spacing=6)
         self.cpu_mode = Gtk.ComboBoxText()
-        self.cpu_mode.append("total", "Gesamtauslastung")
-        self.cpu_mode.append("cores", "Logische Prozessoren")
+        self.cpu_mode.append("total", _("Gesamtauslastung"))
+        self.cpu_mode.append("cores", _("Logische Prozessoren"))
         self.cpu_mode.set_active_id("total")
         switch_box.pack_end(self.cpu_mode, False, False, 0)
         switch_box.pack_end(_dim(Gtk.Label(label="Graph:")), False, False, 0)
@@ -240,33 +242,33 @@ class PerformanceTab(Tab):
             g.set_size_request(60, 40)
             g.set_hexpand(True)
             g.set_vexpand(True)
-            g.set_tooltip_text(f"Logischer Prozessor {i}")
+            g.set_tooltip_text(_('Logischer Prozessor {0}').format(i))
             grid.attach(g, i % cols, i // cols, 1, 1)
             self.core_graphs.append(g)
         self.cpu_stack.add_named(grid, "cores")
         self.cpu_mode.connect("changed", lambda c: self.cpu_stack.set_visible_child_name(c.get_active_id()))
 
         top = Gtk.Box()
-        top.pack_start(_dim(Gtk.Label(label="% Auslastung", xalign=0)), True, True, 0)
+        top.pack_start(_dim(Gtk.Label(label=_("% Auslastung"), xalign=0)), True, True, 0)
         top.pack_end(_dim(Gtk.Label(label="100 %", xalign=1)), False, False, 0)
         page.graph_box.pack_start(top, False, False, 0)
         page.graph_box.pack_start(self.cpu_stack, True, True, 0)
         self.cpu_stack.set_size_request(-1, 220)
         page.add_time_axis()
 
-        for key, cap in (("usage", "Auslastung"), ("speed", "Geschwindigkeit"), ("temp", "Temperatur"),
-                         ("procs", "Prozesse"), ("threads", "Threads"), ("handles", "Handles"),
-                         ("uptime", "Betriebszeit")):
+        for key, cap in (("usage", _("Auslastung")), ("speed", _("Geschwindigkeit")), ("temp", _("Temperatur")),
+                         ("procs", _("Prozesse")), ("threads", _("Threads")), ("handles", _("Handles")),
+                         ("uptime", _("Betriebszeit"))):
             page.add_dyn(key, cap)
-        page.add_static("base", "Basisgeschwindigkeit", util.ghz(info["base_mhz"]))
-        page.add_static("sockets", "Sockets", str(info["sockets"]))
-        page.add_static("cores", "Kerne", str(info["cores"]))
-        page.add_static("logical", "Logische Prozessoren", str(info["logical"]))
-        page.add_static("virt", "Virtualisierung", info["virtualization"])
-        page.add_static("l1", "L1-Cache", info["l1"])
-        page.add_static("l2", "L2-Cache", info["l2"])
-        page.add_static("l3", "L3-Cache", info["l3"])
-        self._add("cpu", "CPU", page, color)
+        page.add_static("base", _("Basisgeschwindigkeit"), util.ghz(info["base_mhz"]))
+        page.add_static("sockets", _("Sockets"), str(info["sockets"]))
+        page.add_static("cores", _("Kerne"), str(info["cores"]))
+        page.add_static("logical", _("Logische Prozessoren"), str(info["logical"]))
+        page.add_static("virt", _("Virtualisierung"), info["virtualization"])
+        page.add_static("l1", _("L1-Cache"), info["l1"])
+        page.add_static("l2", _("L2-Cache"), info["l2"])
+        page.add_static("l3", _("L3-Cache"), info["l3"])
+        self._add("cpu", _("CPU"), page, color)
 
     def _feed_cpu(self, s):
         d = self.devices["cpu"]
@@ -289,24 +291,24 @@ class PerformanceTab(Tab):
     def _build_mem(self):
         color = COLORS["mem"]
         total = self.app.mem_total
-        page = DevicePage("Arbeitsspeicher", util.size(total), color)
+        page = DevicePage(_("Arbeitsspeicher"), util.size(total), color)
         self.mem_graph = Graph(color)
-        self.mem_max = page.add_graph(self.mem_graph, "Speicherauslastung", util.size(total))
-        cap = Gtk.Label(label="Speicherzusammensetzung", xalign=0, margin_top=8)
+        self.mem_max = page.add_graph(self.mem_graph, _("Speicherauslastung"), util.size(total))
+        cap = Gtk.Label(label=_("Speicherzusammensetzung"), xalign=0, margin_top=8)
         page.graph_box.pack_start(_dim(cap), False, False, 0)
         self.mem_bar = SegmentBar(color)
         page.graph_box.pack_start(self.mem_bar, False, False, 0)
-        for key, cap in (("used", "In Verwendung"), ("avail", "Verfügbar"), ("commit", "Zugesichert"),
-                         ("cached", "Im Cache"), ("swap", "Auslagerung (Swap)"),
-                         ("shared", "Gemeinsam genutzt")):
+        for key, cap in (("used", _("In Verwendung")), ("avail", _("Verfügbar")), ("commit", _("Zugesichert")),
+                         ("cached", _("Im Cache")), ("swap", _("Auslagerung (Swap)")),
+                         ("shared", _("Gemeinsam genutzt"))):
             page.add_dyn(key, cap, columns=2)
-        page.add_static("total", "Gesamt", util.size(total))
-        page.add_static("buffers", "Puffer")
-        page.add_static("dirty", "Geändert (Dirty)")
-        page.add_static("slab", "Kernel (Slab)")
-        page.add_static("swaptotal", "Swap gesamt")
-        page.add_static("hw", "Geschwindigkeit/Steckplätze", "nur mit Root (dmidecode) ermittelbar")
-        self._add("mem", "Arbeitsspeicher", page, color)
+        page.add_static("total", _("Gesamt"), util.size(total))
+        page.add_static("buffers", _("Puffer"))
+        page.add_static("dirty", _("Geändert (Dirty)"))
+        page.add_static("slab", _("Kernel (Slab)"))
+        page.add_static("swaptotal", _("Swap gesamt"))
+        page.add_static("hw", _("Geschwindigkeit/Steckplätze"), _("nur mit Root (dmidecode) ermittelbar"))
+        self._add("mem", _("Arbeitsspeicher"), page, color)
 
     def _feed_mem(self, s):
         d = self.devices["mem"]
@@ -332,32 +334,31 @@ class PerformanceTab(Tab):
         total = float(vm.total) or 1
         standby = max(0, vm.available - vm.free)
         self.mem_bar.set_segments([
-            (used / total, 0.45, f"In Verwendung: {util.size(used)}\nVon Programmen und Kernel belegt"),
-            (standby / total, 0.18, f"Standby/Cache: {util.size(standby)}\n"
-                                    "Zwischengespeicherte Daten, bei Bedarf sofort freigebbar"),
-            (vm.free / total, 0.0, f"Frei: {util.size(vm.free)}\nUngenutzt"),
+            (used / total, 0.45, _('In Verwendung: {0}\nVon Programmen und Kernel belegt').format(util.size(used))),
+            (standby / total, 0.18, _('Standby/Cache: {0}\nZwischengespeicherte Daten, bei Bedarf sofort freigebbar').format(util.size(standby))),
+            (vm.free / total, 0.0, _('Frei: {0}\nUngenutzt').format(util.size(vm.free))),
         ])
 
     # ------------------------------------------------------------ Datenträger
     def _build_disk(self, index, name):
         info = sysinfo.disk_info(name)
         color = COLORS["disk"]
-        title = f"Datenträger {index} ({name})"
+        title = _('Datenträger {0} ({1})').format(index, name)
         page = DevicePage(title, info["model"], color)
         g1 = Graph(color)
-        page.add_graph(g1, "Aktive Zeit", "100 %", bottom=False)
+        page.add_graph(g1, _("Aktive Zeit"), "100 %", bottom=False)
         g2 = Graph(color, series=2, fixed_max=None, min_scale=1048576)
-        lbl = page.add_graph(g2, "Übertragungsrate (Lesen ─, Schreiben ┅)", util.rate(1048576), height=90)
+        lbl = page.add_graph(g2, _("Übertragungsrate (Lesen ─, Schreiben ┅)"), util.rate(1048576), height=90)
         g2.scale_changed = lambda v: lbl.set_text(util.rate(v))
-        for key, cap in (("active", "Aktive Zeit"), ("resp", "Durchschn. Antwortzeit"),
-                         ("read", "Lesegeschwindigkeit"), ("write", "Schreibgeschwindigkeit")):
+        for key, cap in (("active", _("Aktive Zeit")), ("resp", _("Durchschn. Antwortzeit")),
+                         ("read", _("Lesegeschwindigkeit")), ("write", _("Schreibgeschwindigkeit"))):
             page.add_dyn(key, cap, columns=2)
-        page.add_static("cap", "Kapazität", util.size(info["capacity"]))
-        page.add_static("fmt", "Formatiert", util.size(info["formatted"]) if info["formatted"] else "–")
-        page.add_static("sys", "Systemdatenträger", "Ja" if info["system"] else "Nein")
-        page.add_static("swap", "Auslagerung (Swap)", "Ja" if info["swap"] else "Nein")
-        page.add_static("type", "Typ", info["type"])
-        page.add_static("dev", "Gerät", f"/dev/{name}")
+        page.add_static("cap", _("Kapazität"), util.size(info["capacity"]))
+        page.add_static("fmt", _("Formatiert"), util.size(info["formatted"]) if info["formatted"] else "–")
+        page.add_static("sys", _("Systemdatenträger"), _("Ja") if info["system"] else _("Nein"))
+        page.add_static("swap", _("Auslagerung (Swap)"), _("Ja") if info["swap"] else _("Nein"))
+        page.add_static("type", _("Typ"), info["type"])
+        page.add_static("dev", _("Gerät"), f"/dev/{name}")
         dev = self._add(f"disk:{name}", title, page, color)
         dev.graphs = (g1, g2)
         dev.info = info
@@ -378,18 +379,18 @@ class PerformanceTab(Tab):
     def _build_net(self, name, position=None):
         info = sysinfo.net_info(name)
         color = COLORS["net"]
-        title = info["type"] if info["type"] != "Virtuell" else name
+        title = info["type"] if info["type"] != _("Virtuell") else name
         page = DevicePage(title, name, color)
         g = Graph(color, series=2, fixed_max=None, min_scale=12500)
-        lbl = page.add_graph(g, "Durchsatz (Empfangen ─, Senden ┅)", util.bits(12500))
+        lbl = page.add_graph(g, _("Durchsatz (Empfangen ─, Senden ┅)"), util.bits(12500))
         g.scale_changed = lambda v: lbl.set_text(util.bits(v))
-        page.add_dyn("sent", "Senden", columns=2)
-        page.add_dyn("recv", "Empfangen", columns=2)
-        page.add_dyn("total_sent", "Gesendet (gesamt)", columns=2)
-        page.add_dyn("total_recv", "Empfangen (gesamt)", columns=2)
-        for key, cap in (("adapter", "Adaptername"), ("ssid", "SSID"), ("type", "Verbindungstyp"),
-                         ("ipv4", "IPv4-Adresse"), ("ipv6", "IPv6-Adresse"), ("speed", "Geschwindigkeit"),
-                         ("mac", "MAC-Adresse"), ("driver", "Treiber"), ("state", "Status")):
+        page.add_dyn("sent", _("Senden"), columns=2)
+        page.add_dyn("recv", _("Empfangen"), columns=2)
+        page.add_dyn("total_sent", _("Gesendet (gesamt)"), columns=2)
+        page.add_dyn("total_recv", _("Empfangen (gesamt)"), columns=2)
+        for key, cap in (("adapter", _("Adaptername")), ("ssid", _("SSID")), ("type", _("Verbindungstyp")),
+                         ("ipv4", "IPv4-Adresse"), ("ipv6", "IPv6-Adresse"), ("speed", _("Geschwindigkeit")),
+                         ("mac", _("MAC-Adresse")), ("driver", _("Treiber")), ("state", _("Status"))):
             page.add_static(key, cap)
         if position is None:
             # Netzwerkadapter immer vor den GPUs einsortieren
@@ -410,11 +411,11 @@ class PerformanceTab(Tab):
         p.set("ipv4", info["ipv4"])
         p.set("ipv6", info["ipv6"].replace(", ", "\n"))
         sp = info["speed"]
-        p.set("speed", f"{util.num(sp / 1000, 1)} Gbit/s" if sp >= 1000 and sp < 65535 else
-              (f"{sp} Mbit/s" if 0 < sp < 65535 else "–"))
+        p.set("speed", _('{0} Gbit/s').format(util.num(sp / 1000, 1)) if sp >= 1000 and sp < 65535 else
+              (_('{0} Mbit/s').format(sp) if 0 < sp < 65535 else "–"))
         p.set("mac", info["mac"])
         p.set("driver", info["driver"] or "–")
-        p.set("state", "Verbunden" if info["up"] and info["ipv4"] != "–" else "Nicht verbunden")
+        p.set("state", _("Verbunden") if info["up"] and info["ipv4"] != "–" else _("Nicht verbunden"))
 
     def _feed_net(self, dev, d, dt):
         dev.graph.push(d["recv"], d["sent"])
@@ -422,9 +423,9 @@ class PerformanceTab(Tab):
         dev.totals[0] += d["sent"] * dt
         dev.totals[1] += d["recv"] * dt
         if dev.info["up"] and dev.info["ipv4"] != "–" or d["sent"] or d["recv"]:
-            dev.row.set_lines(dev.name, f"S: {util.bits(d['sent'])}  E: {util.bits(d['recv'])}")
+            dev.row.set_lines(dev.name, _("S: {0}  E: {1}").format(util.bits(d['sent']), util.bits(d['recv'])))
         else:
-            dev.row.set_lines(dev.name, "Nicht verbunden")
+            dev.row.set_lines(dev.name, _("Nicht verbunden"))
         p = dev.page
         p.set("sent", util.bits(d["sent"]))
         p.set("recv", util.bits(d["recv"]))
@@ -434,22 +435,22 @@ class PerformanceTab(Tab):
     # -------------------------------------------------------------------- GPU
     def _build_gpu(self, index, g):
         color = COLORS["gpu"]
-        title = f"GPU {index}"
+        title = _('GPU {0}').format(index)
         page = DevicePage(title, g["name"], color)
         graph = Graph(color)
         intel_estimate = g["driver"] not in ("amdgpu", "radeon", "nvidia")
-        caption = "Auslastung (geschätzt über Taktrate)" if intel_estimate else "Auslastung"
+        caption = _("Auslastung (geschätzt über Taktrate)") if intel_estimate else _("Auslastung")
         page.add_graph(graph, caption)
-        for key, cap in (("usage", "Auslastung"), ("freq", "Takt"), ("temp", "Temperatur"),
-                         ("vram", "Dedizierter GPU-Speicher")):
+        for key, cap in (("usage", _("Auslastung")), ("freq", _("Takt")), ("temp", _("Temperatur")),
+                         ("vram", _("Dedizierter GPU-Speicher"))):
             page.add_dyn(key, cap, columns=2)
-        page.add_static("driver", "Treiber", g["driver"])
-        page.add_static("slot", "PCI-Steckplatz", g["slot"])
-        page.add_static("card", "Gerät", f"/dev/dri/{g['card']}")
+        page.add_static("driver", _("Treiber"), g["driver"])
+        page.add_static("slot", _("PCI-Steckplatz"), g["slot"])
+        page.add_static("card", _("Gerät"), f"/dev/dri/{g['card']}")
         if intel_estimate:
-            page.add_static("note", "Hinweis",
-                            "Echte Auslastung nur mit Root (intel_gpu_top); angezeigt wird die "
-                            "aktuelle Taktrate relativ zum Maximaltakt.")
+            page.add_static("note", _("Hinweis"),
+                            _("Echte Auslastung nur mit Root (intel_gpu_top); angezeigt wird die "
+                            "aktuelle Taktrate relativ zum Maximaltakt."))
         dev = self._add(f"gpu:{g['card']}", title, page, color)
         dev.graph = graph
         dev.card = g["card"]
@@ -459,7 +460,7 @@ class PerformanceTab(Tab):
         usage = d["usage"]
         dev.graph.push(usage or 0)
         dev.row.graph.push(usage or 0)
-        short = dev.gname.replace("Intel ", "").replace("Advanced Micro Devices", "AMD")
+        short = dev.gname.replace(_("Intel "), "").replace(_("Advanced Micro Devices"), _("AMD"))
         dev.row.set_lines(short, util.pct(usage) if usage is not None else "–")
         p = dev.page
         p.set("usage", util.pct(usage) + (" (gesch.)" if d["estimated"] else "")
@@ -472,7 +473,7 @@ class PerformanceTab(Tab):
         if d["vram_total"]:
             p.set("vram", f"{util.size(d['vram_used'])}/{util.size(d['vram_total'])}")
         else:
-            p.set("vram", "gemeinsam mit RAM" if d["estimated"] else "–")
+            p.set("vram", _("gemeinsam mit RAM") if d["estimated"] else "–")
 
     # ---------------------------------------------------------------- Update
     def feed(self, s):

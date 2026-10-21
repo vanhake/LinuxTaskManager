@@ -4,6 +4,8 @@ Der Thread erzeugt reine Datenobjekte (Snapshot) und übergibt sie per
 GLib.idle_add an den GTK-Hauptthread. Er fasst selbst nie GTK an.
 """
 
+from .i18n import _
+
 import glob
 import os
 import shutil
@@ -61,7 +63,7 @@ def _cpu_freq_mhz():
     try:
         with open("/proc/cpuinfo") as f:
             for line in f:
-                if line.startswith("cpu MHz"):
+                if line.startswith(_("cpu MHz")):
                     vals.append(float(line.split(":", 1)[1]))
     except (OSError, ValueError):
         pass
@@ -140,7 +142,7 @@ def _cpu_temp():
         if not entries:
             continue
         for e in entries:
-            if e.label in ("Package id 0", "Tctl", "Tdie"):
+            if e.label in (_("Package id 0"), _("Tctl"), _("Tdie")):
                 return e.current
         return max(e.current for e in entries)
     return None

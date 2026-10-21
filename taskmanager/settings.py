@@ -13,6 +13,7 @@ DEFAULTS = {
     "maximized": False,
     "page": "overview",
     "theme": "Neon",
+    "language": "auto",
     "mini_pos": None,
     "interval": 1.0,
     "paused": False,

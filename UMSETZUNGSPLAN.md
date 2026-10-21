@@ -115,3 +115,14 @@ Gemessene Last des Hintergrunddienstes: ca. 0,75 % Gesamt-CPU, 22 MB RAM.
 | Schutz | `__main__.py` | spawn importiert das Hauptmodul erneut als `__mp_main__` – ohne `if __name__ == "__main__"` würde jedes Arbeitsprozess ein Fenster öffnen |
 
 Ergebnis auf dem Entwicklungsrechner (Schnell): Single-Core 999, Multi-Core 1.940 (×1,94; 2 Kerne/4 Threads), max. 76 °C, keine Drosselung.
+
+# Version 2.3 – Englisch
+
+| Baustein | Umsetzung |
+|----------|-----------|
+| `i18n.py` | `_()` liefert den deutschen Quelltext oder die englische Übersetzung; `C_(kontext, text)` für Wörter mit mehreren Bedeutungen (z. B. „Benutzer“ = *Users*/*User*) |
+| Umstellung | Ein Skript hat per Python-AST alle sichtbaren Texte in `_()` gehüllt und f-Strings in Vorlagen umgewandelt (`f"{n} Prozesse"` → `_("{0} Prozesse").format(n)`) – rund 600 Texte |
+| `locale_en.py` | Wörterbuch Deutsch → Englisch; automatische Prüfung, dass Platzhalter und Tastenkürzel (`_`) übereinstimmen |
+| Start | `__main__.py` setzt die Sprache **vor** dem Import der übrigen Module, weil viele Texte beim Import ausgewertet werden |
+| Wechsel | Einstellung speichern, sauber beenden, `os.execv` startet das Programm im selben Prozess neu |
+| Stolperfallen | `_` war vorher als Platzhaltervariable benutzt (`for x, _ in …`) und überdeckte die Übersetzungsfunktion → 97 Stellen umbenannt; `.desktop`-Namen werden über `X-GNOME-Gettext-Domain` immer in die Systemsprache übersetzt → im Englischen wird der Originalwert gelesen |

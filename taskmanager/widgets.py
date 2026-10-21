@@ -4,13 +4,15 @@ Farben werden als Schlüssel des aktiven Farbschemas angegeben ("cpu", "mem", ..
 und bei jedem Zeichnen neu aufgelöst – ein Themenwechsel wirkt sofort.
 """
 
+from .i18n import _
+
 import math
 from collections import deque
 
 import cairo
 from gi.repository import Gdk, GLib, Gtk, Pango, PangoCairo
 
-from . import theme
+from . import theme, util
 
 HISTORY = 60
 
@@ -74,7 +76,7 @@ class Graph(Gtk.DrawingArea):
         self.fixed_max = fixed_max
         self.mini = mini
         self.min_scale = min_scale
-        self.data = [deque([0.0] * HISTORY, maxlen=HISTORY) for _ in range(series)]
+        self.data = [deque([0.0] * HISTORY, maxlen=HISTORY) for _x in range(series)]
         self.scale = fixed_max or min_scale
         self.scale_changed = None
         self.tick = 0
@@ -189,7 +191,7 @@ class RingGauge(Gtk.DrawingArea):
 
     def set_value(self, value, text=None, sub=""):
         self.value = max(0.0, min(100.0, value or 0.0))
-        self.text = text if text is not None else f"{round(self.value)} %"
+        self.text = text if text is not None else util.pct(self.value)
         self.sub = sub
         if self._anim is None and self.get_mapped():
             self._anim = GLib.timeout_add(16, self._step)
@@ -322,7 +324,7 @@ class SegmentBar(Gtk.DrawingArea):
         cr.fill_preserve()
         cr.save()
         cr.clip()
-        for x, sw, alpha, _ in self._ranges(w):
+        for x, sw, alpha, _x in self._ranges(w):
             cr.set_source_rgba(r, g, b, alpha)
             cr.rectangle(x, 0, sw, h)
             cr.fill()
@@ -338,7 +340,7 @@ class SegmentBar(Gtk.DrawingArea):
 
     def _tooltip(self, widget, x, y, keyboard, tooltip):
         w = widget.get_allocated_width()
-        for sx, sw, _, tip in self._ranges(w):
+        for sx, sw, _x, tip in self._ranges(w):
             if sx <= x < sx + sw:
                 tooltip.set_text(tip)
                 return True
@@ -398,7 +400,7 @@ class Treemap(Gtk.DrawingArea):
         self.hover = -1
         self.activate = None
         self.format_size = str
-        self.placeholder = "Noch keine Analyse – wähle oben einen Ordner oder ein Laufwerk"
+        self.placeholder = _("Noch keine Analyse – wähle oben einen Ordner oder ein Laufwerk")
         self.set_size_request(300, 260)
         self.set_has_tooltip(True)
         self.add_events(Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.BUTTON_PRESS_MASK
@@ -490,7 +492,7 @@ class Treemap(Gtk.DrawingArea):
         if idx < 0:
             return False
         label, size, payload, is_dir = self.items[idx]
-        tooltip.set_text(f"{label}\n{self.format_size(size)}" + ("\nKlicken zum Öffnen" if is_dir else ""))
+        tooltip.set_text(f"{label}\n{self.format_size(size)}" + (_("\nKlicken zum Öffnen") if is_dir else ""))
         return True
 
 

@@ -1,5 +1,7 @@
 """Registerkarte „Benutzer“: Ressourcen je angemeldetem Benutzer."""
 
+from ..i18n import C_, _
+
 import psutil
 from gi.repository import GdkPixbuf, GObject, Gdk, Gtk, Pango
 
@@ -13,7 +15,7 @@ K_USER, K_PROC = 0, 1
 
 
 class UsersTab(Tab):
-    title = "Benutzer"
+    title = C_("Seite", "Benutzer")
 
     def __init__(self, app):
         super().__init__(app)
@@ -26,7 +28,7 @@ class UsersTab(Tab):
         view.set_tooltip_column(C_TIP)
         view.set_enable_search(False)
 
-        col = Gtk.TreeViewColumn("Benutzer")
+        col = Gtk.TreeViewColumn(_("Benutzer"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "pixbuf", C_ICON)
@@ -38,23 +40,23 @@ class UsersTab(Tab):
         col.set_resizable(True)
         col.set_min_width(220)
         col.set_sort_column_id(C_NAME)
-        col.set_widget(column_header("Benutzer"))
+        col.set_widget(column_header(_("Benutzer")))
         view.append_column(col)
 
-        c = text_column(view, "PID", C_PID, C_PID, 1.0,
+        c = text_column(view, _("PID"), C_PID, C_PID, 1.0,
                         func=lambda co, ce, m, it, d: ce.set_property(
                             "text", str(m.get_value(it, C_PID)) if m.get_value(it, C_PID) > 0 else ""))
-        c.set_widget(column_header("PID"))
-        c = text_column(view, "Status", C_STATUS, C_STATUS)
-        c.set_widget(column_header("Status"))
+        c.set_widget(column_header(_("PID")))
+        c = text_column(view, _("Status"), C_STATUS, C_STATUS)
+        c.set_widget(column_header(_("Status")))
         total_mem = self.app.mem_total
-        self.h_cpu = column_header("CPU", "0 %")
-        self.h_mem = column_header("Arbeitsspeicher", "0 %")
-        self.h_disk = column_header("Datenträger", "")
+        self.h_cpu = column_header(_("CPU"), "0 %")
+        self.h_mem = column_header(_("Arbeitsspeicher"), "0 %")
+        self.h_disk = column_header(_("Datenträger"), "")
         for title, colid, header, fmt, scale in (
-                ("CPU", C_CPU, self.h_cpu, lambda v: util.pct(v, 1), lambda v: v / 100),
-                ("Arbeitsspeicher", C_MEM, self.h_mem, util.mb, lambda v: v / (total_mem * 0.5)),
-                ("Datenträger", C_DISK, self.h_disk, lambda v: "–" if v < 0 else util.mb_rate(v),
+                (_("CPU"), C_CPU, self.h_cpu, lambda v: util.pct(v, 1), lambda v: v / 100),
+                (_("Arbeitsspeicher"), C_MEM, self.h_mem, util.mb, lambda v: v / (total_mem * 0.5)),
+                (_("Datenträger"), C_DISK, self.h_disk, lambda v: "–" if v < 0 else util.mb_rate(v),
                  lambda v: v / (20 * 1048576))):
             cell = Gtk.CellRendererText(xalign=1.0)
             column = Gtk.TreeViewColumn(title, cell)
@@ -65,14 +67,14 @@ class UsersTab(Tab):
             column.set_alignment(1.0)
             column.set_widget(header)
             view.append_column(column)
-        c = text_column(view, "Sitzung", C_SESSION, C_SESSION, ellipsize=True)
-        c.set_widget(column_header("Sitzung"))
+        c = text_column(view, _("Sitzung"), C_SESSION, C_SESSION, ellipsize=True)
+        c.set_widget(column_header(_("Sitzung")))
         c.set_min_width(200)
 
         view.connect("button-press-event", self._on_button)
         view.connect("key-press-event", self._on_key)
 
-        self.show_all = Gtk.CheckButton(label="Alle Benutzer mit Prozessen anzeigen (inkl. Systemkonten)")
+        self.show_all = Gtk.CheckButton(label=_("Alle Benutzer mit Prozessen anzeigen (inkl. Systemkonten)"))
         self.show_all.set_active(self.app.settings["users_show_all"])
         self.show_all.connect("toggled", self._on_toggle)
         top = Gtk.Box(spacing=8, margin=10)
@@ -89,14 +91,14 @@ class UsersTab(Tab):
             self.update(self.app.last_snapshot)
 
     def update(self, snap):
-        set_header(self.h_cpu, "CPU", util.pct(snap.cpu))
-        set_header(self.h_mem, "Arbeitsspeicher", util.pct(snap.vm.percent))
+        set_header(self.h_cpu, _("CPU"), util.pct(snap.cpu))
+        set_header(self.h_mem, _("Arbeitsspeicher"), util.pct(snap.vm.percent))
         sessions = {}
         for u in psutil.users():
             desc = u.terminal or ""
             if u.host:
                 desc += f" ({u.host})"
-            desc += f", seit {util.datetime(u.started)[:-3]}"
+            desc += _(', seit {0}').format(util.datetime(u.started)[:-3])
             sessions.setdefault(u.name, []).append(desc.strip(", "))
         by_user = {}
         for p in snap.procs.values():
@@ -113,9 +115,9 @@ class UsersTab(Tab):
             key = f"u:{name}"
             known = [p.read_rate for p in plist if p.read_rate is not None]
             disk = sum((p.read_rate or 0) + (p.write_rate or 0) for p in plist) if known else -1.0
-            sess = "; ".join(sessions.get(name, [])) or ("nicht angemeldet" if name != CURRENT_USER else "")
+            sess = "; ".join(sessions.get(name, [])) or (_("nicht angemeldet") if name != CURRENT_USER else "")
             rows.append((key, None, [
-                key, user_icon, f"{name} ({len(plist)})", -1, "Aktiv" if name in sessions else "",
+                key, user_icon, f"{name} ({len(plist)})", -1, _("Aktiv") if name in sessions else "",
                 sum(p.cpu for p in plist), sum(p.mem for p in plist), disk, sess, K_USER,
                 Pango.Weight.BOLD, escape(sess)]))
             for p in plist:

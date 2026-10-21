@@ -1,5 +1,7 @@
 """Registerkarte „App-Verlauf“: kumulierte Nutzung je Programm."""
 
+from ..i18n import _
+
 import time
 
 from gi.repository import GdkPixbuf, GObject, Gtk
@@ -14,7 +16,7 @@ C_ICON, C_NAME, C_CPU, C_READ, C_WRITE, C_TOTAL, C_USER = range(7)
 
 
 class AppHistoryTab(Tab):
-    title = "App-Verlauf"
+    title = _("App-Verlauf")
 
     def __init__(self, app):
         super().__init__(app)
@@ -28,7 +30,7 @@ class AppHistoryTab(Tab):
         view = self.view = Gtk.TreeView(model=self.sorted)
         view.set_enable_search(False)
 
-        col = Gtk.TreeViewColumn("Name")
+        col = Gtk.TreeViewColumn(_("Name"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "pixbuf", C_ICON)
@@ -51,25 +53,25 @@ class AppHistoryTab(Tab):
             view.append_column(column)
 
         self._max = {"cpu": 1.0, "io": 1.0}
-        heat_column("CPU-Zeit", C_CPU, util.cpu_time, lambda v: v / self._max["cpu"])
-        heat_column("Datenträger gelesen", C_READ, util.size, lambda v: v / self._max["io"])
-        heat_column("Datenträger geschrieben", C_WRITE, util.size, lambda v: v / self._max["io"])
-        heat_column("E/A gesamt", C_TOTAL, util.size, lambda v: v / self._max["io"])
-        text_column(view, "Benutzer", C_USER, C_USER)
+        heat_column(_("CPU-Zeit"), C_CPU, util.cpu_time, lambda v: v / self._max["cpu"])
+        heat_column(_("Datenträger gelesen"), C_READ, util.size, lambda v: v / self._max["io"])
+        heat_column(_("Datenträger geschrieben"), C_WRITE, util.size, lambda v: v / self._max["io"])
+        heat_column(_("E/A gesamt"), C_TOTAL, util.size, lambda v: v / self._max["io"])
+        text_column(view, _("Benutzer"), C_USER, C_USER)
 
         self.since = Gtk.Label(xalign=0)
         self.since.set_line_wrap(True)
-        reset = Gtk.Button(label="Verlauf löschen")
+        reset = Gtk.Button(label=_("Verlauf löschen"))
         reset.connect("clicked", self._on_reset)
-        self.search = Gtk.SearchEntry(placeholder_text="Programm suchen…")
+        self.search = Gtk.SearchEntry(placeholder_text=_("Programm suchen…"))
         self.search.connect("search-changed", lambda e: self.filter.refilter())
         top = Gtk.Box(spacing=8, margin=10)
         top.pack_start(self.since, True, True, 0)
         top.pack_end(reset, False, False, 0)
         top.pack_end(self.search, False, False, 0)
         hint = Gtk.Label(
-            label="Erfasst wird, solange der Taskmanager läuft. Die Daten werden in "
-                  "~/.local/share/linux-taskmanager/ gespeichert.",
+            label=_("Erfasst wird, solange der Taskmanager läuft. Die Daten werden in "
+                  "~/.local/share/linux-taskmanager/ gespeichert."),
             xalign=0, margin=6)
         hint.get_style_context().add_class("dim-label")
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -84,8 +86,8 @@ class AppHistoryTab(Tab):
         return not q or q in (model.get_value(it, C_NAME) or "").lower()
 
     def _on_reset(self, button):
-        if actions.confirm(self.app.window, "Möchten Sie den App-Verlauf löschen?",
-                           "Alle gesammelten Nutzungsdaten werden zurückgesetzt.", "Verlauf löschen"):
+        if actions.confirm(self.app.window, _("Möchten Sie den App-Verlauf löschen?"),
+                           _("Alle gesammelten Nutzungsdaten werden zurückgesetzt."), _("Verlauf löschen")):
             self.history.reset()
             self.update(None, force=True)
 
@@ -98,8 +100,7 @@ class AppHistoryTab(Tab):
             return
         self._last = time.monotonic()
         self.since.set_markup(
-            f"Ressourcennutzung seit <b>{util.datetime(self.history.since)}</b> für alle Programme "
-            "des Systems.")
+            _('Ressourcennutzung seit <b>{0}</b> für alle Programme des Systems.').format(util.datetime(self.history.since)))
         rows = []
         mx_cpu = mx_io = 1.0
         for name, (cpu, rd, wr, user) in self.history.data.items():

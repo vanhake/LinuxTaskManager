@@ -162,3 +162,13 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | B7 | Ergebnisverlauf (gespeichert), Vergleich mit Bestwert, Löschen einzelner Läufe | S | ✅ |
 | B8 | Ereignisse im Flight Recorder (Benchmark/Belastungstest gestartet, Ergebnis) | K | ✅ |
 | B9 | Oberfläche bleibt während des Tests bedienbar (Arbeitsprozesse mit Nice 5) | M | ✅ |
+
+## Sprache (Version 2.3)
+
+| ID | Anforderung | Prio | Status |
+|----|-------------|------|--------|
+| I1 | Oberfläche auf Englisch umschaltbar (Menü ☰ → Sprache / Language: Automatisch, Deutsch, English) | M | ✅ |
+| I2 | „Automatisch“ folgt der Systemsprache | S | ✅ |
+| I3 | Zahlen- und Datumsformat je Sprache (1.234,5 / 1,234.5; 21.10.2026 / 2026-10-21; „16 %“ / „16%“) | S | ✅ |
+| I4 | Umschalten mit automatischem Neustart, Einstellungen/Spaltenauswahl bleiben erhalten | S | ✅ |
+| I5 | Autostart-Einträge in der gewählten Sprache; Menüeintrag zweisprachig | K | ✅ |

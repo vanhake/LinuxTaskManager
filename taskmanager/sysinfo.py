@@ -1,5 +1,7 @@
 """Statische bzw. selten ändernde Hardware-Informationen."""
 
+from .i18n import _
+
 import glob
 import os
 import re
@@ -29,7 +31,7 @@ def cpu_info():
         "sockets": 1,
         "cores": psutil.cpu_count(logical=False) or 1,
         "logical": psutil.cpu_count(logical=True) or 1,
-        "virtualization": "Deaktiviert",
+        "virtualization": _("Deaktiviert"),
         "l1": "–", "l2": "–", "l3": "–",
     }
     out = _run(["lscpu"])
@@ -45,24 +47,24 @@ def cpu_info():
         pass
     virt = kv.get("Virtualization")
     if virt:
-        info["virtualization"] = f"Aktiviert ({virt})"
+        info["virtualization"] = _('Aktiviert ({0})').format(virt)
 
     def cache(name):
         v = kv.get(name)
         if not v:
             return "–"
         v = re.sub(r"\s*\(.*\)", "", v)
-        return v.replace("KiB", "KB").replace("MiB", "MB").replace("GiB", "GB")
+        return v.replace(_("KiB"), _("KB")).replace(_("MiB"), _("MB")).replace(_("GiB"), _("GB"))
 
     l1d, l1i = kv.get("L1d cache"), kv.get("L1i cache")
     if l1d and l1i:
         try:
             total = _parse_kib(l1d) + _parse_kib(l1i)
-            info["l1"] = f"{int(total)} KB"
+            info["l1"] = _('{0} KB').format(int(total))
         except ValueError:
-            info["l1"] = cache("L1d cache")
-    info["l2"] = cache("L2 cache")
-    info["l3"] = cache("L3 cache")
+            info["l1"] = cache(_("L1d cache"))
+    info["l2"] = cache(_("L2 cache"))
+    info["l3"] = cache(_("L3 cache"))
 
     base = read_file("/sys/devices/system/cpu/cpu0/cpufreq/base_frequency")
     if base:
@@ -90,11 +92,11 @@ def _cpuinfo_model():
     try:
         with open("/proc/cpuinfo") as f:
             for line in f:
-                if line.startswith("model name"):
+                if line.startswith(_("model name")):
                     return line.split(":", 1)[1].strip()
     except OSError:
         pass
-    return "Prozessor"
+    return _("Prozessor")
 
 
 # --------------------------------------------------------------- Datenträger
@@ -121,14 +123,14 @@ def disk_info(name):
     rotational = read_file(f"{base}/queue/rotational", "0") == "1"
     model = (read_file(f"{base}/device/model") or "").strip()
     vendor = (read_file(f"{base}/device/vendor") or "").strip()
-    if vendor and vendor.upper() not in ("ATA", "") and not model.startswith(vendor):
+    if vendor and vendor.upper() not in (_("ATA"), "") and not model.startswith(vendor):
         model = f"{vendor} {model}".strip()
     if name.startswith("nvme"):
-        typ = "SSD (NVMe)"
+        typ = _("SSD (NVMe)")
     elif read_file(f"{base}/removable") == "1":
-        typ = "Wechseldatenträger"
+        typ = _("Wechseldatenträger")
     else:
-        typ = "HDD" if rotational else "SSD"
+        typ = _("HDD") if rotational else _("SSD")
 
     parts = [os.path.basename(p) for p in glob.glob(f"{base}/{name}*")]
     devs = {name, *parts}
@@ -196,11 +198,11 @@ def net_info(name):
         f"/sys/class/net/{name}/phy80211")
     physical = os.path.exists(f"/sys/class/net/{name}/device")
     if wireless:
-        typ = "WLAN"
+        typ = _("WLAN")
     elif physical:
-        typ = "Ethernet"
+        typ = _("Ethernet")
     else:
-        typ = "Virtuell"
+        typ = _("Virtuell")
     ipv4, ipv6 = [], []
     for a in psutil.net_if_addrs().get(name, []):
         if a.family == socket.AF_INET:
@@ -241,14 +243,14 @@ def gpus():
         out = _run(["lspci", "-mm", "-s", slot]) if shutil.which("lspci") else ""
         m = re.findall(r'"([^"]*)"', out)
         if len(m) >= 3:
-            vendor = m[1].replace(" Corporation", "").replace(", Inc.", "")
+            vendor = m[1].replace(_(" Corporation"), "").replace(_(", Inc."), "")
             name = f"{vendor} {m[2]}"
         cards.append({
             "card": card,
             "path": path,
             "slot": slot,
             "driver": driver,
-            "name": name or f"Grafikkarte ({driver})",
+            "name": name or _('Grafikkarte ({0})').format(driver),
         })
     return cards
 
@@ -258,7 +260,7 @@ def hostname():
 
 
 def os_info():
-    pretty = "Linux"
+    pretty = _("Linux")
     try:
         with open("/etc/os-release") as f:
             for line in f:

@@ -1,5 +1,7 @@
 """Registerkarte „Speicherplatz“: Laufwerksbelegung und Ordneranalyse (Treemap)."""
 
+from ..i18n import _
+
 import os
 import stat
 import threading
@@ -89,18 +91,18 @@ class Scanner(threading.Thread):
             f = Node(name, path, False, node)
             f.size = size
             node.children.append(f)
-        for size, _, _ in files[MAX_FILES:]:
+        for size, _x, _x in files[MAX_FILES:]:
             other += size
             other_n += 1
         if other_n:
-            f = Node(f"({other_n} weitere Dateien)", node.path, False, node)
+            f = Node(_('({0} weitere Dateien)').format(other_n), node.path, False, node)
             f.size = other
             node.children.append(f)
         node.children.sort(key=lambda n: n.size, reverse=True)
 
 
 class StorageTab(Tab):
-    title = "Speicherplatz"
+    title = _("Speicherplatz")
     icon = "drive-harddisk-symbolic"
 
     def __init__(self, app):
@@ -113,7 +115,7 @@ class StorageTab(Tab):
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=14, margin=18)
 
         head = Gtk.Box(spacing=10)
-        head.pack_start(styled_label("Laufwerke", "tm-h1"), False, False, 0)
+        head.pack_start(styled_label(_("Laufwerke"), "tm-h1"), False, False, 0)
         self.summary = styled_label("", "tm-dim")
         head.pack_end(self.summary, False, False, 0)
         outer.pack_start(head, False, False, 0)
@@ -124,32 +126,32 @@ class StorageTab(Tab):
         outer.pack_start(self.flow, False, False, 0)
 
         # ------------------------------------------------ Ordneranalyse
-        an = card("Ordneranalyse")
+        an = card(_("Ordneranalyse"))
         bar = Gtk.Box(spacing=8)
         self.up_btn = Gtk.Button.new_from_icon_name("go-up-symbolic", Gtk.IconSize.BUTTON)
-        self.up_btn.set_tooltip_text("Übergeordneter Ordner")
-        self.up_btn.connect("clicked", lambda *_: self._go_up())
-        self.path_label = styled_label("Noch keine Analyse", "tm-mid", ellipsize=Pango.EllipsizeMode.START)
+        self.up_btn.set_tooltip_text(_("Übergeordneter Ordner"))
+        self.up_btn.connect("clicked", lambda *_xx: self._go_up())
+        self.path_label = styled_label(_("Noch keine Analyse"), "tm-mid", ellipsize=Pango.EllipsizeMode.START)
         self.path_label.set_hexpand(True)
-        home_btn = Gtk.Button(label="Persönlicher Ordner")
+        home_btn = Gtk.Button(label=_("Persönlicher Ordner"))
         home_btn.get_style_context().add_class("tm-primary")
-        home_btn.connect("clicked", lambda *_: self.analyze(os.path.expanduser("~")))
-        choose_btn = Gtk.Button(label="Ordner wählen…")
-        choose_btn.connect("clicked", lambda *_: self._choose())
+        home_btn.connect("clicked", lambda *_xx: self.analyze(os.path.expanduser("~")))
+        choose_btn = Gtk.Button(label=_("Ordner wählen…"))
+        choose_btn.connect("clicked", lambda *_xx: self._choose())
         self.open_btn = Gtk.Button.new_from_icon_name("folder-open-symbolic", Gtk.IconSize.BUTTON)
-        self.open_btn.set_tooltip_text("Im Dateimanager öffnen")
-        self.open_btn.connect("clicked", lambda *_: self._open(self.current.path if self.current else None))
-        self.cancel_btn = Gtk.Button(label="Abbrechen")
+        self.open_btn.set_tooltip_text(_("Im Dateimanager öffnen"))
+        self.open_btn.connect("clicked", lambda *_xx: self._open(self.current.path if self.current else None))
+        self.cancel_btn = Gtk.Button(label=_("Abbrechen"))
         self.cancel_btn.get_style_context().add_class("tm-danger")
-        self.cancel_btn.connect("clicked", lambda *_: self._cancel())
+        self.cancel_btn.connect("clicked", lambda *_xx: self._cancel())
         self.spinner = Gtk.Spinner()
         for w in (self.up_btn, self.path_label):
             bar.pack_start(w, w is self.path_label, True, 0)
         for w in (self.spinner, self.cancel_btn, self.open_btn, choose_btn, home_btn):
             bar.pack_end(w, False, False, 0)
         an.pack_start(bar, False, False, 0)
-        self.progress = styled_label("Wähle einen Ordner oder ein Laufwerk zum Analysieren. "
-                                     "Gezählt wird der tatsächlich belegte Platz.", "tm-dim",
+        self.progress = styled_label(_("Wähle einen Ordner oder ein Laufwerk zum Analysieren. "
+                                     "Gezählt wird der tatsächlich belegte Platz."), "tm-dim",
                                      ellipsize=Pango.EllipsizeMode.MIDDLE)
         an.pack_start(self.progress, False, False, 0)
 
@@ -161,7 +163,7 @@ class StorageTab(Tab):
         self.store = Gtk.ListStore(object, str, str, float, str, str)  # node, icon, name, pct, size, pcttext
         view = self.view = Gtk.TreeView(model=self.store)
         view.set_headers_visible(True)
-        col = Gtk.TreeViewColumn("Name")
+        col = Gtk.TreeViewColumn(_("Name"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "icon-name", 1)
@@ -171,10 +173,10 @@ class StorageTab(Tab):
         col.set_expand(True)
         view.append_column(col)
         prog = Gtk.CellRendererProgress()
-        pc = Gtk.TreeViewColumn("Anteil", prog, value=3, text=5)
+        pc = Gtk.TreeViewColumn(_("Anteil"), prog, value=3, text=5)
         pc.set_min_width(110)
         view.append_column(pc)
-        sc = Gtk.TreeViewColumn("Größe", Gtk.CellRendererText(xalign=1), text=4)
+        sc = Gtk.TreeViewColumn(_("Größe"), Gtk.CellRendererText(xalign=1), text=4)
         sc.set_alignment(1)
         view.append_column(sc)
         view.connect("row-activated", self._on_row)
@@ -213,12 +215,12 @@ class StorageTab(Tab):
                 self.flow.show_all()
             set_text(c["pct"], util.pct(m["percent"]))
             c["bar"].set_fraction(m["percent"] / 100)
-            set_text(c["used"], f"{util.size(m['used'])} belegt")
-            set_text(c["free"], f"{util.size(m['free'])} frei von {util.size(m['total'])}")
-        set_text(self.summary, f"Gesamt: {util.size(used)} von {util.size(total)} belegt")
+            set_text(c["used"], _("{0} belegt").format(util.size(m['used'])))
+            set_text(c["free"], _('{0} frei von {1}').format(util.size(m['free']), util.size(m['total'])))
+        set_text(self.summary, _('Gesamt: {0} von {1} belegt').format(util.size(used), util.size(total)))
 
     def _mount_card(self, m):
-        title = "System" if m["mount"] == "/" else os.path.basename(m["mount"]) or m["mount"]
+        title = _("System") if m["mount"] == "/" else os.path.basename(m["mount"]) or m["mount"]
         c = card()
         head = Gtk.Box(spacing=10)
         head.pack_start(Gtk.Image.new_from_icon_name(
@@ -236,13 +238,13 @@ class StorageTab(Tab):
         c.pack_start(bar, False, False, 0)
         info = Gtk.Box()
         used = styled_label("", "tm-num")
-        free = styled_label("", "tm-dim tm-num", xalign=1)
+        free = styled_label("", _("tm-dim tm-num"), xalign=1)
         info.pack_start(used, False, False, 0)
         info.pack_end(free, False, False, 0)
         c.pack_start(info, False, False, 0)
-        btn = Gtk.Button(label="Analysieren")
+        btn = Gtk.Button(label=_("Analysieren"))
         btn.set_halign(Gtk.Align.END)
-        btn.connect("clicked", lambda *_: self.analyze(m["mount"]))
+        btn.connect("clicked", lambda *_xx: self.analyze(m["mount"]))
         c.pack_start(btn, False, False, 0)
         c.set_size_request(260, -1)
         return {"card": c, "pct": pct, "bar": bar, "used": used, "free": free}
@@ -265,7 +267,7 @@ class StorageTab(Tab):
             self.scanner.cancelled = True
             self.scanner = None
             self._set_busy(False)
-            self.progress.set_text("Analyse abgebrochen.")
+            self.progress.set_text(_("Analyse abgebrochen."))
 
     def _set_busy(self, busy):
         self.cancel_btn.set_visible(busy)
@@ -279,7 +281,7 @@ class StorageTab(Tab):
 
     def _on_progress(self, files, path):
         if self.scanner is not None:
-            self.progress.set_text(f"{util.num(files, 0)} Dateien gelesen … {path}")
+            self.progress.set_text(_('{0} Dateien gelesen … {1}').format(util.num(files, 0), path))
         return False
 
     def _on_done(self, node, error):
@@ -287,14 +289,13 @@ class StorageTab(Tab):
         self.scanner = None
         self._set_busy(False)
         if error:
-            actions.message(self.app.window, "Analyse fehlgeschlagen", error)
+            actions.message(self.app.window, _("Analyse fehlgeschlagen"), error)
             return False
         if node is None:
             return False
         secs = time.monotonic() - self._started
-        errs = f", {sc.errors} ohne Zugriff" if sc and sc.errors else ""
-        self.progress.set_text(f"{util.num(sc.files if sc else 0, 0)} Dateien in {util.num(secs, 1)} s "
-                               f"analysiert{errs}. Klicke auf Ordner, um tiefer zu gehen.")
+        errs = _(', {0} ohne Zugriff').format(sc.errors) if sc and sc.errors else ""
+        self.progress.set_text(_('{0} Dateien in {1} s analysiert{2}. Klicke auf Ordner, um tiefer zu gehen.').format(util.num(sc.files if sc else 0, 0), util.num(secs, 1), errs))
         self.root = node
         self.show_node(node)
         return False
@@ -340,12 +341,12 @@ class StorageTab(Tab):
     def _menu(self, node, event):
         menu = Gtk.Menu()
         if node.is_dir:
-            mi = Gtk.MenuItem(label="Öffnen (in Analyse)")
-            mi.connect("activate", lambda *_: self.show_node(node))
+            mi = Gtk.MenuItem(label=_("Öffnen (in Analyse)"))
+            mi.connect("activate", lambda *_xx: self.show_node(node))
             mi.set_sensitive(bool(node.children))
             menu.append(mi)
-        mi = Gtk.MenuItem(label="Im Dateimanager zeigen")
-        mi.connect("activate", lambda *_: self._open(node.path if node.is_dir else os.path.dirname(node.path)))
+        mi = Gtk.MenuItem(label=_("Im Dateimanager zeigen"))
+        mi.connect("activate", lambda *_xx: self._open(node.path if node.is_dir else os.path.dirname(node.path)))
         menu.append(mi)
         menu.show_all()
         menu.attach_to_widget(self.widget, None)
@@ -357,10 +358,10 @@ class StorageTab(Tab):
         try:
             Gio.AppInfo.launch_default_for_uri(Gio.File.new_for_path(path).get_uri(), None)
         except GLib.Error as e:
-            actions.message(self.app.window, "Ordner konnte nicht geöffnet werden", e.message)
+            actions.message(self.app.window, _("Ordner konnte nicht geöffnet werden"), e.message)
 
     def _choose(self):
-        fc = Gtk.FileChooserNative.new("Ordner zum Analysieren wählen", self.app.window,
-                                       Gtk.FileChooserAction.SELECT_FOLDER, "Analysieren", None)
+        fc = Gtk.FileChooserNative.new(_("Ordner zum Analysieren wählen"), self.app.window,
+                                       Gtk.FileChooserAction.SELECT_FOLDER, _("Analysieren"), None)
         if fc.run() == Gtk.ResponseType.ACCEPT:
             self.analyze(fc.get_filename())

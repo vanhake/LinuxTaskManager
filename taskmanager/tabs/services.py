@@ -1,5 +1,7 @@
 """Registerkarte „Dienste“: systemd-Dienste anzeigen und steuern."""
 
+from ..i18n import _
+
 import os
 import subprocess
 import threading
@@ -14,25 +16,25 @@ from . import Tab, scrolled, text_column
 C_NAME, C_PID, C_DESC, C_STATUS, C_START, C_ACTIVE, C_RAWSTATE = range(7)
 
 ACTIVE_DE = {
-    "active": "Wird ausgeführt",
-    "inactive": "Beendet",
-    "failed": "Fehler",
-    "activating": "Wird gestartet",
-    "deactivating": "Wird beendet",
-    "reloading": "Wird neu geladen",
+    "active": _("Wird ausgeführt"),
+    "inactive": _("Beendet"),
+    "failed": _("Fehler"),
+    "activating": _("Wird gestartet"),
+    "deactivating": _("Wird beendet"),
+    "reloading": _("Wird neu geladen"),
 }
 START_DE = {
-    "enabled": "Automatisch",
-    "enabled-runtime": "Automatisch (temporär)",
-    "disabled": "Manuell",
-    "static": "Statisch",
-    "masked": "Deaktiviert (maskiert)",
-    "masked-runtime": "Deaktiviert (temporär)",
-    "indirect": "Indirekt",
-    "generated": "Generiert",
-    "alias": "Alias",
-    "transient": "Temporär",
-    "linked": "Verknüpft",
+    "enabled": _("Automatisch"),
+    "enabled-runtime": _("Automatisch (temporär)"),
+    "disabled": _("Manuell"),
+    "static": _("Statisch"),
+    "masked": _("Deaktiviert (maskiert)"),
+    "masked-runtime": _("Deaktiviert (temporär)"),
+    "indirect": _("Indirekt"),
+    "generated": _("Generiert"),
+    "alias": _("Alias"),
+    "transient": _("Temporär"),
+    "linked": _("Verknüpft"),
 }
 
 
@@ -73,8 +75,8 @@ def load_services(user):
     # MainPID und fehlende Beschreibungen in Blöcken abfragen
     for i in range(0, len(names), 150):
         chunk = names[i:i + 150]
-        out = _systemctl(user, "show", "-p", "Id", "-p", "MainPID", "-p", "Description",
-                         "-p", "UnitFileState", *chunk)
+        out = _systemctl(user, "show", "-p", _("Id"), "-p", _("MainPID"), "-p", _("Description"),
+                         "-p", _("UnitFileState"), *chunk)
         cur = {}
         for line in out.splitlines() + [""]:
             if not line.strip():
@@ -98,7 +100,7 @@ def load_services(user):
 
 
 class ServicesTab(Tab):
-    title = "Dienste"
+    title = _("Dienste")
 
     def __init__(self, app):
         super().__init__(app)
@@ -110,25 +112,25 @@ class ServicesTab(Tab):
         self.sorted.set_sort_column_id(C_NAME, Gtk.SortType.ASCENDING)
         view = self.view = Gtk.TreeView(model=self.sorted)
         view.set_enable_search(False)
-        text_column(view, "Name", C_NAME, C_NAME, width=260, ellipsize=True)
-        text_column(view, "PID", C_PID, C_PID, 1.0,
+        text_column(view, _("Name"), C_NAME, C_NAME, width=260, ellipsize=True)
+        text_column(view, _("PID"), C_PID, C_PID, 1.0,
                     func=lambda co, ce, m, it, d: ce.set_property(
                         "text", str(m.get_value(it, C_PID)) if m.get_value(it, C_PID) else ""))
-        text_column(view, "Beschreibung", C_DESC, C_DESC, expand=True, ellipsize=True, width=300)
-        text_column(view, "Status", C_STATUS, C_STATUS, width=150)
-        text_column(view, "Starttyp", C_START, C_START, width=130)
+        text_column(view, _("Beschreibung"), C_DESC, C_DESC, expand=True, ellipsize=True, width=300)
+        text_column(view, _("Status"), C_STATUS, C_STATUS, width=150)
+        text_column(view, _("Starttyp"), C_START, C_START, width=130)
         view.set_tooltip_column(C_DESC)
         view.get_selection().connect("changed", lambda s: self._update_buttons())
         view.connect("button-press-event", self._on_button)
 
         self.scope = Gtk.ComboBoxText()
-        self.scope.append("system", "Systemdienste")
-        self.scope.append("user", "Benutzerdienste")
+        self.scope.append("system", _("Systemdienste"))
+        self.scope.append("user", _("Benutzerdienste"))
         self.scope.set_active_id("user" if self.app.settings["services_user"] else "system")
         self.scope.connect("changed", self._on_scope)
-        self.search = Gtk.SearchEntry(placeholder_text="Dienst suchen…", width_chars=28)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Dienst suchen…"), width_chars=28)
         self.search.connect("search-changed", lambda e: self.filter.refilter())
-        self.running_only = Gtk.CheckButton(label="Nur laufende")
+        self.running_only = Gtk.CheckButton(label=_("Nur laufende"))
         self.running_only.connect("toggled", lambda c: self.filter.refilter())
         self.info = Gtk.Label(xalign=0)
         self.info.get_style_context().add_class("dim-label")
@@ -138,10 +140,10 @@ class ServicesTab(Tab):
         bottom = Gtk.Box(spacing=8, margin=10)
         bottom.pack_start(self.info, True, True, 0)
         bottom.pack_start(self.spinner, False, False, 0)
-        for key, label in (("start", "Starten"), ("stop", "Beenden"), ("restart", "Neu starten"),
-                           ("enable", "Autostart an"), ("disable", "Autostart aus")):
+        for key, label in (("start", _("Starten")), ("stop", _("Beenden")), ("restart", _("Neu starten")),
+                           ("enable", _("Autostart an")), ("disable", _("Autostart aus"))):
             b = Gtk.Button(label=label)
-            b.connect("clicked", lambda _, k=key: self._action(k))
+            b.connect("clicked", lambda _x, k=key: self._action(k))
             bottom.pack_start(b, False, False, 0)
             self.buttons[key] = b
         top = Gtk.Box(spacing=8, margin=10)
@@ -198,7 +200,7 @@ class ServicesTab(Tab):
             name = unit[:-8] if unit.endswith(".service") else unit
             status = ACTIVE_DE.get(s["active"], s["active"])
             if s["active"] == "active" and s["sub"] == "exited":
-                status = "Aktiv (abgeschlossen)"
+                status = _("Aktiv (abgeschlossen)")
             elif s["active"] == "active" and s["sub"] not in ("running", ""):
                 status += f" ({s['sub']})"
             running += s["active"] == "active" and s["sub"] == "running"
@@ -206,7 +208,7 @@ class ServicesTab(Tab):
                                       START_DE.get(s.get("state", ""), s.get("state", "") or "–"),
                                       s["active"], s.get("state", "")]))
         self.sync.sync(rows)
-        self.info.set_text(f"{len(rows)} Dienste, {running} laufen")
+        self.info.set_text(_('{0} Dienste, {1} laufen').format(len(rows), running))
         self._update_buttons()
         return False
 
@@ -242,9 +244,9 @@ class ServicesTab(Tab):
             return
         unit = s["name"] + ".service"
         if action == "stop" and not self.user and not actions.confirm(
-                self.app.window, f"Dienst „{s['name']}“ beenden?",
-                "Das Beenden von Systemdiensten kann die Funktion des Systems beeinträchtigen.",
-                "Beenden"):
+                self.app.window, _('Dienst „{0}“ beenden?').format(s['name']),
+                _("Das Beenden von Systemdiensten kann die Funktion des Systems beeinträchtigen."),
+                _("Beenden")):
             return
         cmd = ["systemctl"]
         if self.user:
@@ -254,7 +256,7 @@ class ServicesTab(Tab):
         cmd += [action, unit]
         self.spinner.start()
         actions.run_async(cmd, self.app.window, on_done=lambda ok: self.reload(),
-                          error_text=f"Aktion „{action}“ für {unit} fehlgeschlagen")
+                          error_text=_('Aktion „{0}“ für {1} fehlgeschlagen').format(action, unit))
 
     def _on_button(self, view, event):
         if event.type != Gdk.EventType.BUTTON_PRESS or event.button != 3:
@@ -267,11 +269,11 @@ class ServicesTab(Tab):
         for key, b in self.buttons.items():
             mi = Gtk.MenuItem(label=b.get_label())
             mi.set_sensitive(b.get_sensitive())
-            mi.connect("activate", lambda _, k=key: self._action(k))
+            mi.connect("activate", lambda _x, k=key: self._action(k))
             menu.append(mi)
         menu.append(Gtk.SeparatorMenuItem())
-        mi = Gtk.MenuItem(label="Status anzeigen (journalctl)…")
-        mi.connect("activate", lambda *_: self._show_status())
+        mi = Gtk.MenuItem(label=_("Status anzeigen (journalctl)…"))
+        mi.connect("activate", lambda *_xx: self._show_status())
         menu.append(mi)
         menu.show_all()
         menu.attach_to_widget(view, None)
@@ -291,10 +293,10 @@ class ServicesTab(Tab):
         except (OSError, subprocess.SubprocessError) as e:
             out = str(e)
         d = Gtk.Dialog(title=f"Status: {s['name']}", transient_for=self.app.window, modal=True)
-        d.add_button("Schließen", Gtk.ResponseType.CLOSE)
+        d.add_button(_("Schließen"), Gtk.ResponseType.CLOSE)
         d.set_default_size(820, 480)
         tv = Gtk.TextView(editable=False, monospace=True, wrap_mode=Gtk.WrapMode.NONE)
-        tv.get_buffer().set_text(out or "(keine Ausgabe)")
+        tv.get_buffer().set_text(out or _("(keine Ausgabe)"))
         sw = scrolled(tv)
         sw.set_margin_start(8)
         sw.set_margin_end(8)

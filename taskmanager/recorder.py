@@ -7,6 +7,8 @@
 - Schreiben in eigenem Thread, gebündelt; Lesen über eigene Verbindung.
 """
 
+from .i18n import _
+
 import fcntl
 import os
 import queue
@@ -14,6 +16,7 @@ import sqlite3
 import threading
 import time
 
+from . import util
 from .settings import DATA_DIR
 
 DB_PATH = os.path.join(DATA_DIR, "flight.db")
@@ -40,7 +43,7 @@ CREATE INDEX IF NOT EXISTS events_ts ON events(ts);
 SAMPLE_COLS = ["ts", "cpu", "mem", "swap", "disk_r", "disk_w", "disk_act", "net_rx", "net_tx",
                "gpu", "temp", "bat", "watts", "procs", "load1", "freq", "mem_used"]
 
-RETENTIONS = [("1 Stunde", 1), ("6 Stunden", 6), ("24 Stunden", 24), ("3 Tage", 72), ("7 Tage", 168)]
+RETENTIONS = [(_("1 Stunde"), 1), (_("6 Stunden"), 6), (_("24 Stunden"), 24), (_("3 Tage"), 72), (_("7 Tage"), 168)]
 
 
 def connect():
@@ -129,7 +132,7 @@ class Recorder:
         self.active = True
         self._writer = _Writer()
         self._writer.start()
-        self.event("info", "start", "Aufzeichnung gestartet" +
+        self.event("info", "start", _("Aufzeichnung gestartet") +
                    (" (Hintergrunddienst)" if self.role == "daemon" else ""))
         return True
 
@@ -154,7 +157,7 @@ class Recorder:
 
     def close(self):
         if self.active:
-            self.event("info", "stop", "Aufzeichnung beendet")
+            self.event("info", "stop", _("Aufzeichnung beendet"))
             self._writer.q.put(("stop", None))
             self._writer.join(timeout=5)
             try:
@@ -176,7 +179,7 @@ class Recorder:
     def clear(self):
         if self.active:
             self._writer.q.put(("clear", None))
-            self.event("info", "clear", "Aufzeichnung gelöscht")
+            self.event("info", "clear", _("Aufzeichnung gelöscht"))
 
     def add(self, s):
         if not self.active:
@@ -252,42 +255,41 @@ class Recorder:
 
     def _top_cpu_name(self, s):
         top = max(s.procs.values(), key=lambda p: p.cpu, default=None)
-        return f"{top.name} ({top.cpu:.0f} %)".replace(".", ",") if top else "?"
+        return f"{top.name} ({util.pct(top.cpu)})" if top else "?"
 
     def _detect(self, s, disk_act, b):
         ts = s.time
         hot_cpu = self._streak("cpu_n", s.cpu >= 90) >= 5
         self._flag("cpu_high", hot_cpu, s.cpu < 60, "crit",
-                   lambda: f"CPU-Spitze: {s.cpu:.0f} % – größter Verbraucher: {self._top_cpu_name(s)}", ts)
+                   lambda: _('CPU-Spitze: {0:.0f} % – größter Verbraucher: {1}').format(s.cpu, self._top_cpu_name(s)), ts)
         self._flag("mem_high", s.vm.percent >= 90, s.vm.percent < 80, "crit",
-                   lambda: f"Arbeitsspeicher knapp: {s.vm.percent:.0f} % belegt", ts)
+                   lambda: _('Arbeitsspeicher knapp: {0:.0f} % belegt').format(s.vm.percent), ts)
         if s.cpu_temp is not None:
             self._flag("temp_high", s.cpu_temp >= 85, s.cpu_temp < 75, "warn",
-                       lambda: f"Hohe CPU-Temperatur: {s.cpu_temp:.0f} °C", ts)
+                       lambda: _('Hohe CPU-Temperatur: {0:.0f} °C').format(s.cpu_temp), ts)
         busy = self._streak("disk_n", disk_act >= 95) >= 5
         self._flag("disk_busy", busy, disk_act < 50, "warn",
-                   lambda: f"Datenträger ausgelastet ({disk_act:.0f} % aktiv)", ts)
+                   lambda: _('Datenträger ausgelastet ({0:.0f} % aktiv)').format(disk_act), ts)
         # Swap-Wachstum
         sw_prev = self._state.get("swap_ref")
         now_sw = s.swap.used
         if sw_prev is None or ts - sw_prev[0] > 60:
             if sw_prev is not None and now_sw - sw_prev[1] > 256 * 1048576:
-                self.event("warn", "swap", f"Starke Auslagerung: +{(now_sw - sw_prev[1]) / 1048576:.0f} MB "
-                                           "Swap in einer Minute", ts)
+                self.event("warn", "swap", _('Starke Auslagerung: +{0:.0f} MB Swap in einer Minute').format((now_sw - sw_prev[1]) / 1048576), ts)
             self._state["swap_ref"] = (ts, now_sw)
         # Netzteil
         if b and b["ac"] is not None:
             prev = self._state.get("ac")
             if prev is not None and prev != b["ac"]:
-                self.event("info", "power", "Netzteil verbunden" if b["ac"] else
-                           f"Netzteil getrennt – Akku {b['percent']} %", ts)
+                self.event("info", "power", _("Netzteil verbunden") if b["ac"] else
+                           _('Netzteil getrennt – Akku {0} %').format(b['percent']), ts)
             self._state["ac"] = b["ac"]
             self._flag("bat_low", b["percent"] <= 15 and not b["ac"], b["percent"] > 20 or b["ac"], "crit",
-                       lambda: f"Akku fast leer: {b['percent']} %", ts)
+                       lambda: _('Akku fast leer: {0} %').format(b['percent']), ts)
         # Laufwerke
         for m in s.mounts:
             self._flag(f"full:{m['mount']}", m["percent"] >= 95, m["percent"] < 93, "crit",
-                       lambda m=m: f"Laufwerk {m['mount']} fast voll: {m['percent']:.0f} %", ts)
+                       lambda m=m: _('Laufwerk {0} fast voll: {1:.0f} %').format(m['mount'], m['percent']), ts)
 
     def _detect_slow(self, s, items):
         """Prozessbezogene Ereignisse (alle 5 s): neue Dauerlast-Prozesse."""
@@ -297,8 +299,7 @@ class Recorder:
             if cpu >= 50:
                 current.add(pid)
                 if pid not in hogs:
-                    self.event("warn", "hog", f"{a[4]} (PID {pid}) erzeugt hohe Last: "
-                                              f"{cpu:.0f} % CPU".replace(".", ","), s.time)
+                    self.event("warn", "hog", _('{0} (PID {1}) erzeugt hohe Last: {2:.0f} % CPU').format(a[4], pid, cpu), s.time)
         self._state["hogs"] = current
 
 
@@ -361,7 +362,7 @@ class Reader:
         import csv
         with open(path, "w", newline="") as f:
             w = csv.writer(f, delimiter=";")
-            w.writerow(["Zeit"] + SAMPLE_COLS[1:])
+            w.writerow([_("Zeit")] + SAMPLE_COLS[1:])
             for r in self.con.execute(f"SELECT {','.join(SAMPLE_COLS)} FROM samples WHERE ts >= ? AND ts <= ? "
                                       "ORDER BY ts", (t0, t1)):
                 w.writerow([time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(r[0]))] +
@@ -401,7 +402,7 @@ def run_daemon():
 
     sampler = Sampler(on_snap, settings.get("fr_daemon_interval", 2.0))
 
-    def stop(*_):
+    def stop(*_xx):
         sampler.stop()
         rec.close()
         loop.quit()

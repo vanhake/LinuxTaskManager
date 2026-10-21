@@ -1,5 +1,7 @@
 """Seite „CPU-Benchmark“: Leistungstest, Belastungstest und Ergebnisverlauf."""
 
+from ..i18n import _
+
 import os
 import time
 
@@ -16,7 +18,7 @@ def _max_mhz():
 
 
 class BenchmarkTab(Tab):
-    title = "CPU-Benchmark"
+    title = _("CPU-Benchmark")
 
     def __init__(self, app):
         super().__init__(app)
@@ -33,21 +35,21 @@ class BenchmarkTab(Tab):
         # ------------------------------------------------------ Kopf
         head = Gtk.Box(spacing=10)
         titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        titles.pack_start(styled_label("CPU-Benchmark", "tm-h1"), False, False, 0)
-        sub = styled_label(f"{self.cpu['model']}  ·  {self.cpu['cores']} Kerne / {self.threads} Threads",
+        titles.pack_start(styled_label(_("CPU-Benchmark"), "tm-h1"), False, False, 0)
+        sub = styled_label(_('{0}  ·  {1} Kerne / {2} Threads').format(self.cpu['model'], self.cpu['cores'], self.threads),
                            "tm-dim", ellipsize=Pango.EllipsizeMode.END)
         sub.set_tooltip_text(sub.get_text())
         titles.pack_start(sub, False, False, 0)
         head.pack_start(titles, True, True, 0)
-        self.stop_btn = Gtk.Button(label="■  Stopp")
+        self.stop_btn = Gtk.Button(label=_("■  Stopp"))
         self.stop_btn.get_style_context().add_class("tm-danger")
-        self.stop_btn.connect("clicked", lambda *_: self.stop())
-        self.stress_btn = Gtk.Button(label="🔥  Belastungstest")
-        self.stress_btn.set_tooltip_text("Volllast auf allen Kernen bis zum Stopp – prüft Kühlung und Stabilität")
-        self.stress_btn.connect("clicked", lambda *_: self.start_stress())
-        self.start_btn = Gtk.Button(label="▶  Benchmark starten")
+        self.stop_btn.connect("clicked", lambda *_xx: self.stop())
+        self.stress_btn = Gtk.Button(label=_("🔥  Belastungstest"))
+        self.stress_btn.set_tooltip_text(_("Volllast auf allen Kernen bis zum Stopp – prüft Kühlung und Stabilität"))
+        self.stress_btn.connect("clicked", lambda *_xx: self.start_stress())
+        self.start_btn = Gtk.Button(label=_("▶  Benchmark starten"))
         self.start_btn.get_style_context().add_class("tm-primary")
-        self.start_btn.connect("clicked", lambda *_: self.start())
+        self.start_btn.connect("clicked", lambda *_xx: self.start())
         self.mode = Gtk.ComboBoxText()
         for name, secs in bm.MODES:
             self.mode.append(str(secs), f"{name} (~{int(secs * 10 + 4)} s)")
@@ -59,15 +61,15 @@ class BenchmarkTab(Tab):
 
         # ------------------------------------------------------ Punktzahlen
         scores = Gtk.Grid(column_spacing=14, column_homogeneous=True)
-        self.single = self._score_card("Single-Core", "cpu")
-        self.multi = self._score_card(f"Multi-Core · {self.threads} Threads", "mem")
+        self.single = self._score_card(_("Single-Core"), "cpu")
+        self.multi = self._score_card(_('Multi-Core · {0} Threads').format(self.threads), "mem")
         scores.attach(self.single["card"], 0, 0, 1, 1)
         scores.attach(self.multi["card"], 1, 0, 1, 1)
         outer.pack_start(scores, False, False, 0)
 
         # ------------------------------------------------------ Live
-        live = card("Live")
-        self.phase = styled_label("Bereit. Schließe für vergleichbare Werte andere rechenintensive Programme.",
+        live = card(_("Live"))
+        self.phase = styled_label(_("Bereit. Schließe für vergleichbare Werte andere rechenintensive Programme."),
                                   "tm-mid", ellipsize=Pango.EllipsizeMode.END)
         live.pack_start(self.phase, False, False, 0)
         self.progress = Gtk.ProgressBar()
@@ -79,9 +81,9 @@ class BenchmarkTab(Tab):
         self.l_cpu = styled_label("", "tm-mid", xalign=1)
         self.l_temp = styled_label("", "tm-mid", xalign=1)
         self.l_freq = styled_label("", "tm-mid", xalign=1)
-        for i, (cap, g, lbl) in enumerate((("CPU-Auslastung", self.g_cpu, self.l_cpu),
-                                           ("Temperatur", self.g_temp, self.l_temp),
-                                           ("Takt", self.g_freq, self.l_freq))):
+        for i, (cap, g, lbl) in enumerate(((_("CPU-Auslastung"), self.g_cpu, self.l_cpu),
+                                           (_("Temperatur"), self.g_temp, self.l_temp),
+                                           (_("Takt"), self.g_freq, self.l_freq))):
             b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
             hb = Gtk.Box()
             hb.pack_start(styled_label(cap, "tm-dim"), False, False, 0)
@@ -93,8 +95,8 @@ class BenchmarkTab(Tab):
         live.pack_start(graphs, False, False, 0)
         stats = Gtk.Box(spacing=36)
         self.st = {}
-        for key, cap in (("time", "Laufzeit"), ("tmax", "Max. Temperatur"), ("fload", "Takt unter Last (Ø / min)"),
-                         ("throttle", "Drosselung"), ("power", "Stromversorgung")):
+        for key, cap in (("time", _("Laufzeit")), ("tmax", _("Max. Temperatur")), ("fload", _("Takt unter Last (Ø / min)")),
+                         ("throttle", _("Drosselung")), ("power", _("Stromversorgung"))):
             b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             b.pack_start(styled_label(cap, "tm-dim"), False, False, 0)
             v = styled_label("–", "tm-mid")
@@ -105,10 +107,10 @@ class BenchmarkTab(Tab):
         outer.pack_start(live, False, False, 0)
 
         # ------------------------------------------------------ Einzeltests
-        tests = card("Einzeltests")
+        tests = card(_("Einzeltests"))
         grid = Gtk.Grid(column_spacing=14, row_spacing=10)
-        grid.attach(styled_label("Single-Core", "tm-card-title"), 2, 0, 2, 1)
-        grid.attach(styled_label("Multi-Core", "tm-card-title"), 4, 0, 2, 1)
+        grid.attach(styled_label(_("Single-Core"), "tm-card-title"), 2, 0, 2, 1)
+        grid.attach(styled_label(_("Multi-Core"), "tm-card-title"), 4, 0, 2, 1)
         self.rows = {}
         for i, (key, name, desc, ref) in enumerate(bm.TESTS, start=1):
             nb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -125,18 +127,18 @@ class BenchmarkTab(Tab):
                 grid.attach(w, col, i, 1, 1)
             self.rows[key] = {"single": (sb, sv), "multi": (mb, mv)}
         tests.pack_start(grid, False, False, 0)
-        tests.pack_start(styled_label("Punkte: 1000 = ein Kern eines Intel Core i5-4300M (Referenz). "
-                                      "Gesamtwert = geometrisches Mittel der Einzeltests.", "tm-dim"),
+        tests.pack_start(styled_label(_("Punkte: 1000 = ein Kern eines Intel Core i5-4300M (Referenz). "
+                                      "Gesamtwert = geometrisches Mittel der Einzeltests."), "tm-dim"),
                          False, False, 0)
         outer.pack_start(tests, False, False, 0)
 
         # ------------------------------------------------------ Verlauf
-        hist = card("Ergebnisverlauf")
+        hist = card(_("Ergebnisverlauf"))
         self.hstore = Gtk.ListStore(int, str, str, float, float, str, str, str, str)
         hv = self.hview = Gtk.TreeView(model=self.hstore)
-        for title, col, xalign in (("Datum", 1, 0), ("Modus", 2, 0), ("Single", 3, 1), ("Multi", 4, 1),
-                                   ("Skalierung", 5, 1), ("Max. Temp.", 6, 1), ("Ø Takt (Last)", 7, 1),
-                                   ("Strom", 8, 0)):
+        for title, col, xalign in ((_("Datum"), 1, 0), (_("Modus"), 2, 0), (_("Single"), 3, 1), (_("Multi"), 4, 1),
+                                   (_("Skalierung"), 5, 1), (_("Max. Temp."), 6, 1), (_("Ø Takt (Last)"), 7, 1),
+                                   (_("Strom"), 8, 0)):
             cell = Gtk.CellRendererText(xalign=xalign)
             c = Gtk.TreeViewColumn(title, cell, text=col)
             if col in (3, 4):
@@ -155,8 +157,8 @@ class BenchmarkTab(Tab):
         hb = Gtk.Box(spacing=8)
         self.best_label = styled_label("", "tm-dim")
         hb.pack_start(self.best_label, False, False, 0)
-        del_btn = Gtk.Button(label="Ausgewähltes Ergebnis löschen")
-        del_btn.connect("clicked", lambda *_: self._delete_selected())
+        del_btn = Gtk.Button(label=_("Ausgewähltes Ergebnis löschen"))
+        del_btn.connect("clicked", lambda *_xx: self._delete_selected())
         hb.pack_end(del_btn, False, False, 0)
         hist.pack_start(hb, False, False, 0)
         outer.pack_start(hist, False, False, 0)
@@ -193,7 +195,7 @@ class BenchmarkTab(Tab):
         col = f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"
         text = "–" if value is None else util.num(value, 0)
         d["big"].set_markup(f"<span size='38000' weight='heavy' foreground='{col}'>{text}</span>"
-                            f"<span size='large'>  Punkte</span>")
+                            f"<span size='large'>  {_('Punkte')}</span>")
 
     def _animate(self, d, target):
         if d["anim"]:
@@ -237,7 +239,7 @@ class BenchmarkTab(Tab):
         for d in (self.single, self.multi):
             d["value"] = 0
             self._set_big(d, None)
-            set_text(d["sub1"], "läuft…")
+            set_text(d["sub1"], _("läuft…"))
             set_text(d["sub2"], "")
             d["bar"].set_fraction(0)
         duration = float(self.mode.get_active_id())
@@ -250,23 +252,21 @@ class BenchmarkTab(Tab):
             on_done=lambda res, err: idle(self._on_done, res, err),
             threads=self.threads)
         self._set_running(True)
-        self.app.recorder.event("info", "bench", f"CPU-Benchmark gestartet ({self._mode_name})")
+        self.app.recorder.event("info", "bench", _('CPU-Benchmark gestartet ({0})').format(self._mode_name))
         self.run.start()
 
     def start_stress(self):
         if self.running:
             return
-        if not actions.confirm(self.app.window, "Belastungstest starten?",
-                               f"Alle {self.threads} Threads werden bis zum Stopp voll ausgelastet. Der Rechner "
-                               "wird warm, Lüfter drehen hoch. Beobachte Temperatur und Takt; bei Problemen "
-                               "„Stopp“ drücken.", "Starten"):
+        if not actions.confirm(self.app.window, _("Belastungstest starten?"),
+                               _('Alle {0} Threads werden bis zum Stopp voll ausgelastet. Der Rechner wird warm, Lüfter drehen hoch. Beobachte Temperatur und Takt; bei Problemen „Stopp“ drücken.').format(self.threads), _("Starten")):
             return
         self._new_stats()
         self.stress = bm.StressRun(lambda err: GLib.idle_add(self._on_stress_done, err), threads=self.threads)
         self._set_running(True)
         self.progress.set_fraction(0)
-        set_text(self.phase, f"🔥 Belastungstest läuft auf {self.threads} Threads – „Stopp“ zum Beenden")
-        self.app.recorder.event("warn", "stress", "Belastungstest gestartet")
+        set_text(self.phase, _('🔥 Belastungstest läuft auf {0} Threads – „Stopp“ zum Beenden').format(self.threads))
+        self.app.recorder.event("warn", "stress", _("Belastungstest gestartet"))
         self.stress.start()
         GLib.timeout_add(120, self._pulse)
 
@@ -279,10 +279,10 @@ class BenchmarkTab(Tab):
     def stop(self):
         if self.run:
             self.run.cancel()
-            set_text(self.phase, "Wird abgebrochen…")
+            set_text(self.phase, _("Wird abgebrochen…"))
         if self.stress:
             self.stress.cancel()
-            set_text(self.phase, "Belastungstest wird beendet…")
+            set_text(self.phase, _("Belastungstest wird beendet…"))
 
     def retheme(self):
         for d in (self.single, self.multi):
@@ -310,10 +310,10 @@ class BenchmarkTab(Tab):
         self.run = None
         self._set_running(False)
         if err:
-            set_text(self.phase, f"Benchmark {err}.")
+            set_text(self.phase, _('Benchmark {0}.').format(err))
             self.progress.set_fraction(0)
             self._show_last()
-            self.app.recorder.event("info", "bench", f"CPU-Benchmark {err}")
+            self.app.recorder.event("info", "bench", _('CPU-Benchmark {0}').format(err))
             return False
         st = self._summary()
         entry = {
@@ -329,10 +329,8 @@ class BenchmarkTab(Tab):
             pass
         self._fill_history()
         self._show_result(entry)
-        set_text(self.phase, f"Fertig – Single-Core {util.num(entry['single_total'], 0)} · "
-                             f"Multi-Core {util.num(entry['multi_total'], 0)} Punkte")
-        self.app.recorder.event("info", "bench", f"CPU-Benchmark: Single {entry['single_total']:.0f}, "
-                                                 f"Multi {entry['multi_total']:.0f} Punkte")
+        set_text(self.phase, _('Fertig – Single-Core {0} · Multi-Core {1} Punkte').format(util.num(entry['single_total'], 0), util.num(entry['multi_total'], 0)))
+        self.app.recorder.event("info", "bench", _('CPU-Benchmark: Single {0:.0f}, Multi {1:.0f} Punkte').format(entry['single_total'], entry['multi_total']))
         return False
 
     def _on_stress_done(self, err):
@@ -341,11 +339,11 @@ class BenchmarkTab(Tab):
         self._set_running(False)
         self.progress.set_fraction(0)
         st = self._summary()
-        msg = f"Belastungstest beendet nach {util.uptime_text(dur) if dur >= 60 else f'{int(dur)} s'}"
+        msg = _('Belastungstest beendet nach {0}').format(util.uptime_text(dur) if dur >= 60 else f'{int(dur)} s')
         if st.get("max_temp"):
-            msg += f" · max. {st['max_temp']:.0f} °C"
+            msg += _(' · max. {0:.0f} °C').format(st['max_temp'])
         if err:
-            msg += f" (Fehler: {err})"
+            msg += _(' (Fehler: {0})').format(err)
         set_text(self.phase, msg)
         self.app.recorder.event("info", "stress", msg)
         return False
@@ -360,7 +358,7 @@ class BenchmarkTab(Tab):
         set_text(self.l_temp, f"{util.num(s.cpu_temp, 0)} °C" if s.cpu_temp is not None else "–")
         set_text(self.l_freq, util.ghz(s.cpu_freq))
         b = s.battery
-        set_text(self.st["power"], "–" if not b else ("Netzteil" if b["ac"] else f"Akku ({b['percent']} %)"))
+        set_text(self.st["power"], "–" if not b else (_("Netzteil") if b["ac"] else _('Akku ({0} %)').format(b['percent'])))
         if not self.running or self.stats is None:
             return
         st = self.stats
@@ -379,19 +377,19 @@ class BenchmarkTab(Tab):
                "throttle": "–", "ac": st.get("ac")}
         lf = st["load_freqs"]
         if lf:
-            freqs = [f for _, f, _ in lf]
+            freqs = [f for _x, f, _x in lf]
             res["avg_freq"] = sum(freqs) / len(freqs)
             res["min_freq"] = min(freqs)
             base = self.cpu["base_mhz"] or self.max_mhz
-            early = [f for t, f, _ in lf if t - lf[0][0] <= 5]
-            late = [f for t, f, _ in lf if lf[-1][0] - t <= 5]
+            early = [f for t, f, _x in lf if t - lf[0][0] <= 5]
+            late = [f for t, f, _x in lf if lf[-1][0] - t <= 5]
             hot = res["max_temp"] is not None and res["max_temp"] >= 85
             if res["avg_freq"] < base * 0.9:
-                res["throttle"] = "Takt unter Basistakt"
+                res["throttle"] = _("Takt unter Basistakt")
             elif len(lf) >= 10 and sum(late) / len(late) < sum(early) / len(early) * 0.85 and hot:
-                res["throttle"] = "Thermisch gedrosselt"
+                res["throttle"] = _("Thermisch gedrosselt")
             else:
-                res["throttle"] = "keine erkannt"
+                res["throttle"] = _("keine erkannt")
         return res
 
     def _show_stats(self, st):
@@ -400,7 +398,7 @@ class BenchmarkTab(Tab):
             set_text(self.st["fload"], f"{util.ghz(st['avg_freq'])} / {util.ghz(st['min_freq'])}")
         else:
             set_text(self.st["fload"], "–")
-        set_text(self.st["throttle"], st.get("throttle") or "–")
+        set_text(self.st["throttle"], _(st.get("throttle") or "–"))
 
     # ------------------------------------------------------------ Ergebnisse
     def _show_last(self):
@@ -419,12 +417,11 @@ class BenchmarkTab(Tab):
                 self._set_big(d, v)
             d["bar"].set_fraction(v / max(best, 1) * 0.95)
             pct = v / max(best, 1) * 100
-            set_text(d["sub2"], f"{util.num(pct, 0)} % des Bestwerts ({util.num(best, 0)})")
-        set_text(self.single["sub1"], f"{e['mode']} · {util.datetime(e['ts'])[:-3]}")
+            set_text(d["sub2"], _("{0} des Bestwerts ({1})").format(util.pct(pct), util.num(best, 0)))
+        set_text(self.single["sub1"], f"{_(e['mode'])} · {util.datetime(e['ts'])[:-3]}")
         scaling = e["multi_total"] / max(1, e["single_total"])
-        set_text(self.multi["sub1"], f"Skalierung ×{util.num(scaling, 2)} gegenüber einem Kern")
-        set_text(self.multi["sub2"], f"{self.cpu['cores']} Kerne / {e['threads']} Threads · "
-                                     f"{self.multi['sub2'].get_text()}")
+        set_text(self.multi["sub1"], _('Skalierung ×{0} gegenüber einem Kern').format(util.num(scaling, 2)))
+        set_text(self.multi["sub2"], _('{0} Kerne / {1} Threads · {2}').format(self.cpu['cores'], e['threads'], self.multi['sub2'].get_text()))
         for key, r in self.rows.items():
             for mode, scale in (("single", 1500.0), ("multi", 1100.0 * e["threads"])):
                 bar, lbl = r[mode]
@@ -432,35 +429,34 @@ class BenchmarkTab(Tab):
                 bar.set_fraction((v or 0) / scale)
                 set_text(lbl, util.num(v, 0) if v else "–")
         self._show_stats(e)
-        set_text(self.st["time"], f"{util.num(e['duration'] * 10, 0)} s Messzeit")
+        set_text(self.st["time"], _('{0} s Messzeit').format(util.num(e['duration'] * 10, 0)))
 
     def _fill_history(self):
         self.hstore.clear()
         for i, e in enumerate(self.history):
             scaling = e["multi_total"] / max(1, e["single_total"])
             self.hstore.append([
-                i, util.datetime(e["ts"])[:-3], e["mode"], e["single_total"], e["multi_total"],
+                i, util.datetime(e["ts"])[:-3], _(e["mode"]), e["single_total"], e["multi_total"],
                 f"×{util.num(scaling, 2)}",
                 f"{util.num(e['max_temp'], 0)} °C" if e.get("max_temp") is not None else "–",
                 util.ghz(e["avg_freq"]) if e.get("avg_freq") else "–",
-                "–" if e.get("ac") is None else ("Netzteil" if e["ac"] else "Akku"),
+                "–" if e.get("ac") is None else (_("Netzteil") if e["ac"] else _("Akku")),
             ])
         self.hstore.set_sort_column_id(0, Gtk.SortType.DESCENDING)
         if self.history:
             bs = max(self.history, key=lambda h: h["single_total"])
             bmx = max(self.history, key=lambda h: h["multi_total"])
-            set_text(self.best_label, f"{len(self.history)} Läufe  ·  Bestwerte: Single "
-                                      f"{util.num(bs['single_total'], 0)}, Multi {util.num(bmx['multi_total'], 0)}")
+            set_text(self.best_label, _('{0} Läufe  ·  Bestwerte: Single {1}, Multi {2}').format(len(self.history), util.num(bs['single_total'], 0), util.num(bmx['multi_total'], 0)))
         else:
-            set_text(self.best_label, "Noch keine Ergebnisse – starte den ersten Benchmark.")
+            set_text(self.best_label, _("Noch keine Ergebnisse – starte den ersten Benchmark."))
 
     def _delete_selected(self):
         model, it = self.hview.get_selection().get_selected()
         if it is None:
             return
         idx = model.get_value(it, 0)
-        if not actions.confirm(self.app.window, "Ergebnis löschen?",
-                               f"Lauf vom {model.get_value(it, 1)} wird aus dem Verlauf entfernt.", "Löschen"):
+        if not actions.confirm(self.app.window, _("Ergebnis löschen?"),
+                               _('Lauf vom {0} wird aus dem Verlauf entfernt.').format(model.get_value(it, 1)), _("Löschen")):
             return
         del self.history[idx]
         try:

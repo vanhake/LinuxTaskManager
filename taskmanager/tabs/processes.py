@@ -1,5 +1,7 @@
 """Registerkarte „Prozesse“: Apps, Hintergrund- und Systemprozesse."""
 
+from ..i18n import _
+
 import os
 
 from gi.repository import GdkPixbuf, GObject, Gdk, Gtk, Pango
@@ -21,7 +23,7 @@ C_KEY, C_ICON, C_NAME, C_PID, C_STATUS, C_CPU, C_MEM, C_DISK, C_USER, C_KIND, C_
     C_WEIGHT, C_TIP = range(13)
 K_GROUP, K_APP, K_CHILD, K_PROC = range(4)
 
-GROUPS = [("g:apps", "Apps"), ("g:bg", "Hintergrundprozesse"), ("g:sys", "Systemprozesse")]
+GROUPS = [("g:apps", _("Apps")), ("g:bg", _("Hintergrundprozesse")), ("g:sys", _("Systemprozesse"))]
 
 
 def _is_kernel_thread(p):
@@ -29,7 +31,7 @@ def _is_kernel_thread(p):
 
 
 class ProcessesTab(Tab):
-    title = "Prozesse"
+    title = _("Prozesse")
 
     def __init__(self, app):
         super().__init__(app)
@@ -58,7 +60,7 @@ class ProcessesTab(Tab):
         view.set_enable_search(False)
 
         # Name mit Symbol
-        col = Gtk.TreeViewColumn("Name")
+        col = Gtk.TreeViewColumn(_("Name"))
         pix = Gtk.CellRendererPixbuf()
         col.pack_start(pix, False)
         col.add_attribute(pix, "pixbuf", C_ICON)
@@ -70,27 +72,27 @@ class ProcessesTab(Tab):
         col.set_resizable(True)
         col.set_min_width(240)
         col.set_sort_column_id(C_NAME)
-        col.set_widget(column_header("Name"))
+        col.set_widget(column_header(_("Name")))
         view.append_column(col)
         view.set_expander_column(col)
 
-        c = text_column(view, "PID", C_PID, C_PID, 1.0,
+        c = text_column(view, _("PID"), C_PID, C_PID, 1.0,
                         func=lambda co, ce, m, it, d: ce.set_property(
                             "text", str(m.get_value(it, C_PID)) if m.get_value(it, C_PID) > 0 else ""))
-        c.set_widget(column_header("PID"))
-        c = text_column(view, "Status", C_STATUS, C_STATUS)
-        c.set_widget(column_header("Status"))
+        c.set_widget(column_header(_("PID")))
+        c = text_column(view, _("Status"), C_STATUS, C_STATUS)
+        c.set_widget(column_header(_("Status")))
 
         total_mem = self.app.mem_total
-        self.h_cpu = column_header("CPU", "0 %")
-        self.h_mem = column_header("Arbeitsspeicher", "0 %")
-        self.h_disk = column_header("Datenträger", "0 %")
+        self.h_cpu = column_header(_("CPU"), "0 %")
+        self.h_mem = column_header(_("Arbeitsspeicher"), "0 %")
+        self.h_disk = column_header(_("Datenträger"), "0 %")
         for title, colid, header, fmt, scale in (
-                ("CPU", C_CPU, self.h_cpu, lambda v: "" if v < 0 else util.pct(v, 1),
+                (_("CPU"), C_CPU, self.h_cpu, lambda v: "" if v < 0 else util.pct(v, 1),
                  lambda v: v / 100),
-                ("Arbeitsspeicher", C_MEM, self.h_mem, lambda v: "" if v < 0 else util.mb(v),
+                (_("Arbeitsspeicher"), C_MEM, self.h_mem, lambda v: "" if v < 0 else util.mb(v),
                  lambda v: v / (total_mem * 0.15)),
-                ("Datenträger", C_DISK, self.h_disk,
+                (_("Datenträger"), C_DISK, self.h_disk,
                  lambda v: "" if v == -1 else ("–" if v == -2 else util.mb_rate(v)),
                  lambda v: v / (20 * 1048576))):
             cell = Gtk.CellRendererText(xalign=1.0)
@@ -103,20 +105,20 @@ class ProcessesTab(Tab):
             column.set_widget(header)
             view.append_column(column)
 
-        c = text_column(view, "Benutzer", C_USER, C_USER)
-        c.set_widget(column_header("Benutzer"))
+        c = text_column(view, _("Benutzer"), C_USER, C_USER)
+        c.set_widget(column_header(_("Benutzer")))
 
         view.connect("button-press-event", self._on_button)
         view.connect("key-press-event", self._on_key)
         view.connect("row-activated", self._on_activated)
         view.get_selection().connect("changed", self._on_selection)
 
-        self.search = Gtk.SearchEntry(placeholder_text="Name oder PID suchen…", width_chars=30)
+        self.search = Gtk.SearchEntry(placeholder_text=_("Name oder PID suchen…"), width_chars=30)
         self.search.connect("search-changed", self._on_search)
-        self.end_button = Gtk.Button(label="Task beenden")
+        self.end_button = Gtk.Button(label=_("Task beenden"))
         self.end_button.set_sensitive(False)
         self.end_button.get_style_context().add_class("tm-danger")
-        self.end_button.connect("clicked", lambda *_: self.end_selected())
+        self.end_button.connect("clicked", lambda *_xx: self.end_selected())
 
         top = Gtk.Box(spacing=8, margin=10)
         top.pack_start(self.search, False, False, 0)
@@ -152,10 +154,10 @@ class ProcessesTab(Tab):
 
     def update(self, snap):
         procs = snap.procs
-        set_header(self.h_cpu, "CPU", util.pct(snap.cpu))
-        set_header(self.h_mem, "Arbeitsspeicher", util.pct(snap.vm.percent))
+        set_header(self.h_cpu, _("CPU"), util.pct(snap.cpu))
+        set_header(self.h_mem, _("Arbeitsspeicher"), util.pct(snap.vm.percent))
         disk = max((d["active"] for d in snap.disks.values()), default=0)
-        set_header(self.h_disk, "Datenträger", util.pct(disk))
+        set_header(self.h_disk, _("Datenträger"), util.pct(disk))
 
         visible = {pid: p for pid, p in procs.items() if not _is_kernel_thread(p)}
         rows = []
@@ -240,16 +242,16 @@ class ProcessesTab(Tab):
         self.sync.sync(rows)
         if first:
             # Gruppen beim ersten Mal aufklappen
-            for gkey, _ in GROUPS:
+            for gkey, _x in GROUPS:
                 it = self.sync.iters.get(gkey)
                 if it is not None:
                     self._expand_store_iter(it)
         else:
-            for gkey, _ in GROUPS:
+            for gkey, _x in GROUPS:
                 it = self.sync.iters.get(gkey)
                 if it is not None and gkey not in self._seen_groups:
                     self._expand_store_iter(it)
-        self._seen_groups = {g for g, _ in GROUPS if g in self.sync.iters}
+        self._seen_groups = {g for g, _x in GROUPS if g in self.sync.iters}
         self._after_sync()
 
     _seen_groups = set()
@@ -304,7 +306,7 @@ class ProcessesTab(Tab):
         if ka == K_GROUP or kb == K_GROUP:
             # Gruppen immer in fester Reihenfolge, unabhängig von der Sortierrichtung
             r = compare(model.get_value(a, C_ORDER), model.get_value(b, C_ORDER))
-            _, order = self.sorted.get_sort_column_id()
+            _x, order = self.sorted.get_sort_column_id()
             return -r if order == Gtk.SortType.DESCENDING else r
         r = compare(model.get_value(a, col), model.get_value(b, col))
         if r == 0 and col != C_NAME:
@@ -326,7 +328,7 @@ class ProcessesTab(Tab):
         return model.get_value(it, C_PID), name
 
     def _on_selection(self, sel):
-        pid, _ = self._selected()
+        pid, _x = self._selected()
         self.end_button.set_sensitive(pid is not None)
 
     def end_selected(self):
