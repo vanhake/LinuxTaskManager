@@ -172,3 +172,12 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | I3 | Zahlen- und Datumsformat je Sprache (1.234,5 / 1,234.5; 21.10.2026 / 2026-10-21; „16 %“ / „16%“) | S | ✅ |
 | I4 | Umschalten mit automatischem Neustart, Einstellungen/Spaltenauswahl bleiben erhalten | S | ✅ |
 | I5 | Autostart-Einträge in der gewählten Sprache; Menüeintrag zweisprachig | K | ✅ |
+
+## Release-Dateien (Version 2.4)
+
+| ID | Anforderung | Prio | Status |
+|----|-------------|------|--------|
+| R1 | Download als Debian-Paket (`.deb`), installierbar per Doppelklick, mit Menüeintrag und Abhängigkeiten | M | ✅ |
+| R2 | Download als einzelne, direkt ausführbare Datei (`.pyz`) ohne Installation | M | ✅ |
+| R3 | Programm läuft unabhängig vom Speicherort (Neustart beim Sprachwechsel, Hintergrund-Rekorder, Benchmark) | M | ✅ |
+| R4 | Build per Skript (`build.sh`) inkl. Prüfsummen; Veröffentlichung als GitHub-Release | S | ✅ |

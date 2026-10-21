@@ -6,7 +6,7 @@ import sys
 import psutil
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from . import actions, i18n, sysinfo, theme, util
+from . import actions, i18n, launcher, sysinfo, theme, util
 from .i18n import _
 from .history import AppHistory
 from .mini import MiniWindow
@@ -29,7 +29,7 @@ from .widgets import styled_label
 
 # per Umgebungsvariable änderbar (z. B. für Tests neben einer laufenden Instanz)
 APP_ID = os.environ.get("TASKMANAGER_APP_ID", "de.local.LinuxTaskmanager")
-VERSION = "2.4"
+from .version import VERSION  # noqa: E402
 SPEEDS = [(_("Hoch"), 0.5), (_("Normal"), 1.0), (_("Niedrig"), 4.0)]
 
 # (Name, Klasse, Titel, Symbol)
@@ -362,9 +362,8 @@ class TaskManager(Gtk.Application):
         self.benchmark.shutdown()
         self.sampler.stop()
         self.recorder.close()
-        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        os.chdir(root)
-        os.execv(sys.executable, [sys.executable, "-m", "taskmanager"])
+        # gleiche Startart wie bisher (Projektordner, .deb oder .pyz)
+        os.execve(sys.executable, launcher.argv(), launcher.env())
 
     def _set_group(self, active):
         self.settings["group_by_type"] = active

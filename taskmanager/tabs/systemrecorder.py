@@ -10,12 +10,11 @@ import time
 import cairo
 from gi.repository import GdkPixbuf, GLib, Gdk, Gtk, Pango
 
-from .. import actions, icons, theme, util
+from .. import actions, icons, launcher, theme, util
 from ..recorder import RETENTIONS, Reader
 from ..widgets import draw_text, heat_cell_func, nice_ceiling, rounded_rect, set_text, styled_label
 from . import Tab, scrolled
 
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 AUTOSTART = os.path.join(GLib.get_user_config_dir(), "autostart", "linux-taskmanager-recorder.desktop")
 
 RANGES = [(_("5 min"), 300), (_("15 min"), 900), ("1 h", 3600), ("6 h", 21600), ("24 h", 86400), (_("Alles"), None)]
@@ -785,11 +784,10 @@ class SystemRecorderTab(Tab):
     def _on_daemon(self, cb):
         if cb.get_active():
             os.makedirs(os.path.dirname(AUTOSTART), exist_ok=True)
-            exe = os.path.join(PROJECT_DIR, "taskmanager.sh")
             with open(AUTOSTART, "w") as f:
-                f.write(_('[Desktop Entry]\nType=Application\nName=Taskmanager Systemrekorder\nComment=Zeichnet Systemdaten für den Systemrekorder im Hintergrund auf\nExec="{0}" --recorder\nIcon=media-record\nTerminal=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n').format(exe))
+                f.write(_('[Desktop Entry]\nType=Application\nName=Taskmanager Systemrekorder\nComment=Zeichnet Systemdaten für den Systemrekorder im Hintergrund auf\nExec={0}\nIcon=media-record\nTerminal=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n').format(launcher.desktop_exec("--recorder")))
             # gleich starten – übernimmt die Aufzeichnung, sobald dieses Fenster geschlossen wird
-            subprocess.Popen([sys.executable, "-m", "taskmanager", "--recorder"], cwd=PROJECT_DIR,
+            subprocess.Popen(launcher.argv("--recorder"), env=launcher.env(),
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         else:
             try:

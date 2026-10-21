@@ -134,3 +134,13 @@ der gleichnamigen Funktion anderer Programme zu vermeiden. Intern: Seite `sysrec
 `tabs/systemrecorder.py`, Datenbank `systemrecorder.db`. Eine vorhandene `flight.db` wird beim ersten Start
 automatisch übernommen (sobald der Prozess die Schreibsperre hält); die alte Seiteneinstellung „flight“
 wird weiter erkannt.
+
+# Version 2.4 – Release-Dateien
+
+| Baustein | Umsetzung |
+|----------|-----------|
+| `start.py` | gemeinsamer Einstieg für alle Startarten; `--recorder`, `--version`, `--help` |
+| `launcher.py` | erkennt Projektordner, `.deb`-Installation oder `.pyz`-Archiv und liefert passende Startbefehle (Neustart per `os.execve`, Hintergrund-Rekorder, Autostart-`Exec` mit korrektem Quoting nach Desktop-Entry-Spezifikation) – ohne das Arbeitsverzeichnis zu wechseln (`PYTHONPATH`) |
+| `.pyz` | `python3 -m zipapp` mit eigenem `__main__.py` (Schutz für Benchmark-Prozesse, die „spawn“ das Archiv erneut laden lässt) |
+| `.deb` | `dpkg-deb --root-owner-group`: Paket unter `/usr/lib/linux-taskmanager`, Starter `/usr/bin/linux-taskmanager`, Desktop-Datei, Copyright (GPL-3+), Changelog; `postinst`/`prerm` erzeugen bzw. entfernen Bytecode; `lintian` ohne Fehler |
+| `build.sh` | baut beide Dateien und `SHA256SUMS` nach `dist/` |

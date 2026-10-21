@@ -101,35 +101,65 @@ sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-wnck-3.0 pyth
 
 ## Installation
 
-### 1. Herunterladen
+Fertige Dateien gibt es unter **[Releases](https://github.com/vanhake/LinuxTaskManager/releases/latest)**.
+Es gibt drei Wege – für die meisten ist **A** der einfachste.
+
+### A) Debian-Paket `.deb` (empfohlen)
+
+1. Unter *Releases* die Datei **`linux-taskmanager_<version>_all.deb`** herunterladen.
+2. Doppelklick auf die Datei → **„Paket installieren“** (Passwort eingeben).
+   Alternativ im Terminal:
+
+   ```bash
+   sudo apt install ./linux-taskmanager_2.4.0_all.deb
+   ```
+
+3. Starten über das Anwendungsmenü → **Taskmanager**, oder im Terminal mit `linux-taskmanager`.
+
+Fehlende Abhängigkeiten (GTK, psutil …) installiert `apt` automatisch mit.
+Deinstallieren: `sudo apt remove linux-taskmanager`
+
+### B) Einzelne Datei `.pyz` (ohne Installation)
+
+1. Unter *Releases* die Datei **`linux-taskmanager-<version>.pyz`** herunterladen.
+2. Ausführbar machen: Rechtsklick → *Eigenschaften* → *Zugriffsrechte* → **„Als Programm ausführen“**,
+   oder im Terminal:
+
+   ```bash
+   chmod +x linux-taskmanager-2.4.0.pyz
+   ```
+
+3. Doppelklick (→ „Ausführen“) oder `./linux-taskmanager-2.4.0.pyz`
+
+Die Datei kann an einem beliebigen Ort liegen (z. B. `~/Programme`). Benötigt die auf Linux Mint
+vorinstallierten Pakete (siehe [Voraussetzungen](#voraussetzungen)).
+
+### C) Aus dem Quellcode
 
 ```bash
 git clone https://github.com/vanhake/LinuxTaskManager.git
 cd LinuxTaskManager
-```
-
-### 2. Direkt starten (ohne Installation)
-
-```bash
 ./taskmanager.sh
 ```
 
-### 3. Installieren (empfohlen)
-
-Legt einen Eintrag **„Taskmanager“** im Anwendungsmenü und den Befehl `taskmanager` an:
-
-```bash
-./install.sh
-```
-
-Mit Tastenkürzel **Strg+Umschalt+Esc** (wie unter Windows, nur Cinnamon):
+Menüeintrag und Befehl `taskmanager` für diese Variante anlegen – optional mit Tastenkürzel
+**Strg+Umschalt+Esc** (wie unter Windows, nur Cinnamon):
 
 ```bash
 ./install.sh --shortcut
 ```
 
-> Der Projektordner wird nicht kopiert – der Starter verweist auf ihn. Ordner also nach der
+> Der Projektordner wird dabei nicht kopiert – der Starter verweist auf ihn. Ordner also nach der
 > Installation nicht verschieben (sonst `./install.sh` erneut ausführen).
+> Nicht zusätzlich zum `.deb`-Paket verwenden, sonst erscheint der Taskmanager zweimal im Menü.
+
+### Release-Dateien selbst bauen
+
+```bash
+./build.sh
+```
+
+Erzeugt `.deb`, `.pyz` und `SHA256SUMS` im Ordner `dist/`.
 
 ---
 
@@ -246,7 +276,8 @@ Einzige Netzwerkaktion: „Online suchen“ im Kontextmenü öffnet eine Websuch
 ./install.sh --uninstall
 ```
 
-Entfernt Menüeintrag, Befehl und Tastenkürzel. Einstellungen und Aufzeichnungen bleiben erhalten;
+(für Variante C) bzw. `sudo apt remove linux-taskmanager` (Variante A); bei Variante B einfach die
+Datei löschen. Entfernt Menüeintrag, Befehl und Tastenkürzel. Einstellungen und Aufzeichnungen bleiben erhalten;
 ganz löschen mit:
 
 ```bash
@@ -262,7 +293,10 @@ Falls der Hintergrunddienst des Systemrekorders aktiv war: vorher in der App den
 
 ```
 taskmanager/
+├── start.py        Einstieg (Fenster, --recorder, --version)
 ├── app.py          Hauptfenster, Navigation, Menü
+├── launcher.py     Startbefehle für Projektordner, .deb und .pyz
+├── version.py      Programmversion
 ├── sampler.py      Messung in Hintergrund-Thread (psutil, /proc, /sys)
 ├── recorder.py     Systemrekorder (SQLite, Ereigniserkennung, Hintergrunddienst)
 ├── benchmark.py    CPU-Benchmark und Belastungstest (multiprocessing)
