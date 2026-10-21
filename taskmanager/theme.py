@@ -113,7 +113,7 @@ CSS = """
     background-color: alpha(@tm_accent, 0.16); color: @tm_accent;
     box-shadow: inset 3px 0 0 @tm_accent;
 }}
-.tm-sidebar .tm-brand {{ color: @tm_accent; font-weight: 900; letter-spacing: 4px; font-size: 13pt; }}
+.tm-sidebar .tm-brand {{ color: @tm_accent; font-weight: 900; letter-spacing: 1px; font-size: 12pt; }}
 .tm-sidebar .tm-brand-sub {{ color: @tm_dim; font-size: 8pt; letter-spacing: 2px; }}
 
 .tm-page {{ background-color: @tm_bg; }}

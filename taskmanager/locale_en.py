@@ -86,8 +86,8 @@ EN = {
     "Dienste": "Services",
     "Taskmanager": "Task Manager",
     "TASKMANAGER": "TASK MANAGER",
-    "◢ TASK": "◢ TASK",
-    "MANAGER  ·  LINUX": "MANAGER  ·  LINUX",
+    "◢ TASKMANAGER": "◢ TASK MANAGER",
+    "FÜR LINUX": "FOR LINUX",
     "{0} (Strg+{1})": "{0} (Ctrl+{1})",
 
     # ------------------------------------------------------------ Kopfleiste & Menü
