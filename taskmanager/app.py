@@ -354,6 +354,10 @@ class TaskManager(Gtk.Application):
         d.set_program_name("Taskmanager für Linux")
         d.set_version(VERSION)
         d.set_logo_icon_name("utilities-system-monitor")
+        d.set_copyright("© 2026 vanhake")
+        d.set_license_type(Gtk.License.GPL_3_0)
+        d.set_website("https://github.com/vanhake/LinuxTaskManager")
+        d.set_website_label("Projekt auf GitHub")
         d.set_comments("Prozesse, Leistung, Speicherplatz, Verbindungen, Autostart, Benutzer und "
                        "Dienste im Blick – inspiriert vom Windows-Taskmanager und TMOG.")
         d.run()

@@ -24,6 +24,7 @@ Komplett auf Deutsch, ohne zusätzliche Pakete lauffähig.
 - [Grenzen](#grenzen)
 - [Deinstallation](#deinstallation)
 - [Projektaufbau](#projektaufbau)
+- [Lizenz](#lizenz)
 
 ---
 
@@ -267,3 +268,17 @@ taskmanager/
 Weitere Dokumentation: [Anforderungen](ANFORDERUNGEN.md) · [Umsetzungsplan](UMSETZUNGSPLAN.md)
 
 Gebaut mit Python 3, GTK 3 (PyGObject), Cairo und psutil.
+
+---
+
+## Lizenz
+
+Copyright © 2026 vanhake
+
+Dieses Programm ist freie Software: Du kannst es unter den Bedingungen der
+**GNU General Public License Version 3** (oder, nach deiner Wahl, jeder späteren Version)
+weitergeben und/oder verändern. Veränderte Versionen müssen ebenfalls unter der GPL
+mit Quelltext weitergegeben werden.
+
+Die Veröffentlichung erfolgt in der Hoffnung, dass das Programm nützlich ist, aber **ohne jede
+Gewährleistung**. Details siehe [LICENSE](LICENSE) bzw. <https://www.gnu.org/licenses/gpl-3.0.html>.
