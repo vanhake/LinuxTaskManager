@@ -115,6 +115,8 @@ Es gibt drei Wege – für die meisten ist **A** der einfachste.
    ```
 
 3. Starten über das Anwendungsmenü → **Taskmanager**, oder im Terminal mit `linux-taskmanager`.
+4. Optional: im Taskmanager ☰ → **„Tastenkürzel Strg+Umschalt+Esc“** anhaken – danach öffnet die
+   Tastenkombination den Taskmanager von überall (wie unter Windows, nur Cinnamon).
 
 Fehlende Abhängigkeiten (GTK, psutil …) installiert `apt` automatisch mit.
 Deinstallieren: `sudo apt remove linux-taskmanager`
@@ -131,7 +133,9 @@ Deinstallieren: `sudo apt remove linux-taskmanager`
 
 3. Doppelklick (→ „Ausführen“) oder `./linux-taskmanager-2.4.0.pyz`
 
-Die Datei kann an einem beliebigen Ort liegen (z. B. `~/Programme`). Benötigt die auf Linux Mint
+Das Tastenkürzel Strg+Umschalt+Esc lässt sich auch hier über ☰ → *Tastenkürzel Strg+Umschalt+Esc*
+einrichten (die Datei danach nicht mehr verschieben). Die Datei kann an einem beliebigen Ort liegen
+(z. B. `~/Programme`). Benötigt die auf Linux Mint
 vorinstallierten Pakete (siehe [Voraussetzungen](#voraussetzungen)).
 
 ### C) Aus dem Quellcode
@@ -168,7 +172,7 @@ Erzeugt `.deb`, `.pyz` und `SHA256SUMS` im Ordner `dist/`.
 - **Navigation:** Seitenleiste links oder **Strg+1 … Strg+0**
 - **Menü (☰ oben rechts):** Farbschema, **Sprache / Language** (Automatisch, Deutsch, English),
   Aktualisierungsgeschwindigkeit (0,5 s / 1 s / 4 s / angehalten), Prozesse nach Typ gruppieren,
-  Immer im Vordergrund, Über
+  Immer im Vordergrund, **Tastenkürzel Strg+Umschalt+Esc** (ein/aus), Über
 - **Sprache wechseln:** ☰ → Sprache / Language → gewünschte Sprache → „Jetzt neu starten“.
   „Automatisch“ richtet sich nach der Systemsprache (Deutsch bei deutschem System, sonst Englisch).
 - **Kopfleiste:** ➕ neuen Task starten · ⟳ aktualisieren · Mini-Modus · Live-Werte in der Mitte
@@ -239,7 +243,7 @@ Gezählt wird der tatsächlich belegte Platz; andere Partitionen/Netzlaufwerke w
 | **Strg+N** | Neuen Task ausführen |
 | **Strg+M** | Mini-Modus |
 | **Strg+Q** | Beenden |
-| **Strg+Umschalt+Esc** | Taskmanager öffnen (nach `./install.sh --shortcut`) |
+| **Strg+Umschalt+Esc** | Taskmanager öffnen (☰ → „Tastenkürzel Strg+Umschalt+Esc“ bzw. `./install.sh --shortcut`) |
 
 ---
 

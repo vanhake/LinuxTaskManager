@@ -6,7 +6,7 @@ import sys
 import psutil
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from . import actions, i18n, launcher, sysinfo, theme, util
+from . import actions, i18n, launcher, shortcut, sysinfo, theme, util
 from .i18n import _
 from .history import AppHistory
 from .mini import MiniWindow
@@ -251,6 +251,17 @@ class TaskManager(Gtk.Application):
 
         check(_("Prozesse nach _Typ gruppieren"), "group_by_type", self._set_group)
         check(_("_Immer im Vordergrund"), "always_on_top", self._set_on_top)
+
+        # globales Tastenkürzel (benutzerbezogen in Cinnamon)
+        sc = Gtk.CheckMenuItem.new_with_mnemonic(_("_Tastenkürzel Strg+Umschalt+Esc"))
+        if shortcut.available():
+            sc.set_active(shortcut.is_enabled())
+            sc.set_tooltip_text(_("Öffnet den Taskmanager systemweit mit Strg+Umschalt+Esc (wie unter Windows)"))
+            sc.connect("toggled", self._set_shortcut)
+        else:
+            sc.set_sensitive(False)
+            sc.set_tooltip_text(_("Nur unter Cinnamon verfügbar"))
+        menu.append(sc)
         menu.append(Gtk.SeparatorMenuItem())
         item(_("Ü_ber Taskmanager"), self._about)
         item(_("_Beenden"), self.quit, accel="<Control>q")
@@ -370,6 +381,21 @@ class TaskManager(Gtk.Application):
         self.processes.sync.clear()
         if self.last_snapshot:
             self.processes.update(self.last_snapshot)
+
+    def _set_shortcut(self, item):
+        if not item.get_active():
+            shortcut.disable()
+            return
+        other = shortcut.conflict()
+        if other and not actions.confirm(
+                self.window, _("Strg+Umschalt+Esc ist bereits belegt"),
+                _("Das Tastenkürzel „{0}“ verwendet dieselbe Kombination. Trotzdem einrichten?").format(other),
+                _("Einrichten")):
+            item.handler_block_by_func(self._set_shortcut)
+            item.set_active(False)
+            item.handler_unblock_by_func(self._set_shortcut)
+            return
+        shortcut.enable()
 
     def _set_on_top(self, active):
         self.settings["always_on_top"] = active

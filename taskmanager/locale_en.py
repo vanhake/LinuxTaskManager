@@ -110,6 +110,14 @@ EN = {
     "Angehalten": "Paused",
     "Prozesse nach _Typ gruppieren": "Group processes by _type",
     "_Immer im Vordergrund": "_Always on top",
+    "_Tastenkürzel Strg+Umschalt+Esc": "_Shortcut Ctrl+Shift+Esc",
+    "Öffnet den Taskmanager systemweit mit Strg+Umschalt+Esc (wie unter Windows)":
+        "Opens the Task Manager anywhere with Ctrl+Shift+Esc (like on Windows)",
+    "Nur unter Cinnamon verfügbar": "Only available on Cinnamon",
+    "Strg+Umschalt+Esc ist bereits belegt": "Ctrl+Shift+Esc is already in use",
+    "Das Tastenkürzel „{0}“ verwendet dieselbe Kombination. Trotzdem einrichten?":
+        "The shortcut “{0}” uses the same combination. Set it up anyway?",
+    "Einrichten": "Set up",
     "Ü_ber Taskmanager": "_About Task Manager",
     "_Beenden": "_Quit",
     "{0}   ·   CPU {1}   ·   RAM {2}   ·   {3} Prozesse   ·   Betriebszeit {4}":
