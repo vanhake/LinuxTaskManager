@@ -279,6 +279,16 @@ class TaskManager(Gtk.Application):
         if self.last_snapshot is not None and row.page not in ("performance", "overview"):
             tab.update(self.last_snapshot)
 
+    def open_cleanup(self):
+        """Fenster „Speicherplatz freigeben“ (nur einmal gleichzeitig)."""
+        from .tabs.cleanup import CleanupWindow
+        win = getattr(self, "_cleanup_win", None)
+        if win is not None and win.get_visible():
+            win.present()
+            return
+        self._cleanup_win = CleanupWindow(self)
+        self._cleanup_win.connect("destroy", lambda *_x: setattr(self, "_cleanup_win", None))
+
     def show_page(self, name):
         self.nav.select_row(self.nav_rows[name])
 

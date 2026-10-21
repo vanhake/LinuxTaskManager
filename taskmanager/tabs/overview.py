@@ -100,11 +100,15 @@ class OverviewTab(Tab):
         self.mount_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         self.mount_rows = {}
         storage = card(_("Festplattenbelegung"), self.mount_box)
+        btns = Gtk.Box(spacing=8, halign=Gtk.Align.END)
+        free_btn = Gtk.Button(label=_("🧹  Speicherplatz freigeben"))
+        free_btn.get_style_context().add_class("tm-primary")
+        free_btn.connect("clicked", lambda *_xx: self.app.open_cleanup())
         btn = Gtk.Button(label=_("Speicherplatz analysieren  →"))
-        btn.get_style_context().add_class("tm-primary")
-        btn.set_halign(Gtk.Align.END)
         btn.connect("clicked", lambda *_xx: self.app.show_page("storage"))
-        storage.pack_end(btn, False, False, 0)
+        btns.pack_start(free_btn, False, False, 0)
+        btns.pack_start(btn, False, False, 0)
+        storage.pack_end(btns, False, False, 0)
         grid.attach(storage, 0, 2, 2, 1)
 
         top = card(_("Top-Prozesse"))

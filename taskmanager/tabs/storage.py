@@ -117,7 +117,12 @@ class StorageTab(Tab):
         head = Gtk.Box(spacing=10)
         head.pack_start(styled_label(_("Laufwerke"), "tm-h1"), False, False, 0)
         self.summary = styled_label("", "tm-dim")
-        head.pack_end(self.summary, False, False, 0)
+        free_btn = Gtk.Button(label=_("🧹  Speicherplatz freigeben"))
+        free_btn.get_style_context().add_class("tm-primary")
+        free_btn.set_tooltip_text(_("Temporäre Dateien, Caches und alte Pakete entfernen, selten genutzte Programme finden"))
+        free_btn.connect("clicked", lambda *_x: self.app.open_cleanup())
+        head.pack_end(free_btn, False, False, 0)
+        head.pack_end(self.summary, False, False, 12)
         outer.pack_start(head, False, False, 0)
 
         self.flow = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, column_spacing=14,

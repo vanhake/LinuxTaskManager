@@ -92,3 +92,13 @@ def for_icon_string(icon):
             gicon = None
         _cache[key] = (_load(gicon) if gicon else None) or named("application-x-executable")
     return _cache[key]
+
+
+def for_gicon(gicon):
+    """Symbol aus einem Gio.Icon (z. B. von Gio.AppInfo.get_icon())."""
+    if gicon is None:
+        return named("application-x-executable")
+    key = ("gicon", gicon.to_string())
+    if key not in _cache:
+        _cache[key] = _load(gicon) or named("application-x-executable")
+    return _cache[key]
