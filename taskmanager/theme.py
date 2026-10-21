@@ -221,7 +221,14 @@ popover checkbutton, popover label {{ color: @tm_text; }}
     background: alpha({crit}, 0.15); color: {crit}; border: 1px solid alpha({crit}, 0.6);
     border-radius: 20px; padding: 0 10px; font-weight: 800; font-size: 8.5pt; min-height: 22px;
 }}
-.tm-mini {{ background-color: alpha(@tm_bg, 0.94); border: 1px solid @tm_accent; border-radius: 12px; }}
+.tm-mini {{
+    background-color: alpha(@tm_bg, 0.985); border: 1px solid @tm_accent; border-radius: 14px;
+    padding: 14px 18px 16px 18px;
+}}
+.tm-root button.tm-flat {{
+    background: transparent; border-color: transparent; box-shadow: none; padding: 2px; min-height: 0; min-width: 0;
+}}
+.tm-root button.tm-flat:hover {{ background: alpha(@tm_accent, 0.15); border-color: transparent; }}
 .tm-mini label {{ color: @tm_text; font-feature-settings: "tnum"; }}
 .tm-chip {{
     background: alpha(@tm_accent, 0.12); color: @tm_accent; border-radius: 20px; padding: 2px 10px;
