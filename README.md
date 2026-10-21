@@ -2,10 +2,10 @@
 
 **Ein moderner Taskmanager für Linux Mint** – inspiriert vom Windows-Taskmanager und von
 [TMOG](https://www.omgubuntu.co.uk/2026/09/tmog-task-manager-linux-beta): Neon-Design, Dashboard,
-Flight Recorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Modus.
+Systemrekorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Modus.
 **Deutsch und Englisch** (umschaltbar), ohne zusätzliche Pakete lauffähig.
 
-> 🇬🇧 *English:* A modern task manager for Linux Mint with dashboard, flight recorder, CPU benchmark and
+> 🇬🇧 *English:* A modern task manager for Linux Mint with dashboard, system recorder, CPU benchmark and
 > disk analysis. Switch the language via **☰ → Sprache / Language → English**.
 
 ![Übersicht](docs/screenshots/uebersicht.png)
@@ -19,7 +19,7 @@ Flight Recorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Mo
 - [Voraussetzungen](#voraussetzungen)
 - [Installation](#installation)
 - [Bedienung](#bedienung)
-- [Flight Recorder](#flight-recorder)
+- [Systemrekorder](#systemrekorder)
 - [CPU-Benchmark](#cpu-benchmark)
 - [Speicherplatz analysieren](#speicherplatz-analysieren)
 - [Tastenkürzel](#tastenkürzel)
@@ -38,7 +38,7 @@ Flight Recorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Mo
 | **Übersicht** | Dashboard mit Ringanzeigen für CPU, RAM, GPU und Akku, Last je Kern, Netzwerk- und Datenträger-Graph, Festplattenbelegung, Top-Prozesse und Systeminfos |
 | **Prozesse** | Apps (mit Fenster, aufklappbar inkl. Kindprozessen), Hintergrund- und Systemprozesse; CPU, Arbeitsspeicher, Datenträger mit Farbhervorhebung; Suche; Task beenden |
 | **Leistung** | Verlaufsgraphen für CPU (gesamt oder je logischem Prozessor), Arbeitsspeicher, jeden Datenträger, jeden Netzwerkadapter und die GPU – mit allen Kennzahlen |
-| **Flight Recorder** | Zeichnet laufend auf und lässt dich zurückspulen: Zeitleiste mit Ereignissen (CPU-Spitzen, RAM knapp, Hitze …), Abspielen, Zustand und Top-Prozesse zu jedem Zeitpunkt |
+| **Systemrekorder** | Zeichnet laufend auf und lässt dich zurückspulen: Zeitleiste mit Ereignissen (CPU-Spitzen, RAM knapp, Hitze …), Abspielen, Zustand und Top-Prozesse zu jedem Zeitpunkt |
 | **CPU-Benchmark** | Single- und Multi-Core-Punktwerte aus 5 Testlasten, Live-Temperatur und -Takt, Drosselungserkennung, Belastungstest, Ergebnisverlauf |
 | **Speicherplatz** | Belegung aller Laufwerke; Ordneranalyse als Treemap zum Hineinklicken |
 | **Verbindungen** | Offene Netzwerkverbindungen je Prozess |
@@ -63,10 +63,10 @@ Apps werden wie unter Windows mit ihren Unterprozessen gruppiert; hohe Werte sin
 ### Leistung
 ![Leistung](docs/screenshots/leistung.png)
 
-### Flight Recorder
+### Systemrekorder
 Zurückspulen wie bei einem Video – hier ist der Abspielkopf auf einen früheren Zeitpunkt gesetzt.
 
-![Flight Recorder](docs/screenshots/flight-recorder.png)
+![Systemrekorder](docs/screenshots/systemrekorder.png)
 
 ### CPU-Benchmark
 ![CPU-Benchmark](docs/screenshots/cpu-benchmark.png)
@@ -151,12 +151,12 @@ Mit Tastenkürzel **Strg+Umschalt+Esc** (wie unter Windows, nur Cinnamon):
 
 ---
 
-## Flight Recorder
+## Systemrekorder
 
-Der Flight Recorder speichert laufend den Systemzustand, damit du **nachträglich** sehen kannst,
+Der Systemrekorder speichert laufend den Systemzustand, damit du **nachträglich** sehen kannst,
 was passiert ist – z. B. warum der Lüfter vorhin hochgedreht hat.
 
-1. Seite **Flight Recorder** öffnen – „● REC“ zeigt, dass aufgezeichnet wird (Schalter „Aufzeichnen“ oben rechts).
+1. Seite **Systemrekorder** öffnen – „● REC“ zeigt, dass aufgezeichnet wird (Schalter „Aufzeichnen“ oben rechts).
 2. Zeitraum wählen (**5 min … 24 h, Alles**), mit dem **Mausrad zoomen**, mit **Umschalt+Mausrad verschieben**.
 3. In die Zeitleiste **klicken oder ziehen** → unten erscheinen alle Werte und die **Top-Prozesse zu genau diesem Zeitpunkt**.
 4. **◆ Ereignisse** (CPU-Spitze mit Verursacher, RAM knapp, Hitze, Netzteil getrennt, Laufwerk fast voll …)
@@ -222,7 +222,7 @@ Gezählt wird der tatsächlich belegte Platz; andere Partitionen/Netzlaufwerke w
 | Datei | Inhalt |
 |-------|--------|
 | `~/.config/linux-taskmanager/settings.json` | Einstellungen |
-| `~/.local/share/linux-taskmanager/flight.db` | Flight-Recorder-Aufzeichnung |
+| `~/.local/share/linux-taskmanager/systemrecorder.db` | Aufzeichnung des Systemrekorders |
 | `~/.local/share/linux-taskmanager/benchmarks.json` | Benchmark-Ergebnisse |
 | `~/.local/share/linux-taskmanager/app_history.json` | App-Verlauf |
 
@@ -253,7 +253,7 @@ ganz löschen mit:
 rm -r ~/.config/linux-taskmanager ~/.local/share/linux-taskmanager
 ```
 
-Falls der Flight-Recorder-Hintergrunddienst aktiv war: vorher in der App den Haken
+Falls der Hintergrunddienst des Systemrekorders aktiv war: vorher in der App den Haken
 „Im Hintergrund aufzeichnen“ entfernen.
 
 ---
@@ -264,7 +264,7 @@ Falls der Flight-Recorder-Hintergrunddienst aktiv war: vorher in der App den Hak
 taskmanager/
 ├── app.py          Hauptfenster, Navigation, Menü
 ├── sampler.py      Messung in Hintergrund-Thread (psutil, /proc, /sys)
-├── recorder.py     Flight Recorder (SQLite, Ereigniserkennung, Hintergrunddienst)
+├── recorder.py     Systemrekorder (SQLite, Ereigniserkennung, Hintergrunddienst)
 ├── benchmark.py    CPU-Benchmark und Belastungstest (multiprocessing)
 ├── theme.py        Farbschemata und GTK-CSS
 ├── i18n.py         Sprachumschaltung, Funktion _()

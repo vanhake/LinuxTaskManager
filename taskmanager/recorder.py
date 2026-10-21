@@ -1,4 +1,4 @@
-"""Flight Recorder: zeichnet Systemzustand und Top-Prozesse in SQLite auf.
+"""Systemrekorder: zeichnet Systemzustand und Top-Prozesse in SQLite auf.
 
 - Systemwerte bei jeder Messung, Top-Prozesse (gemittelt) alle 5 Sekunden
 - erkennt Ereignisse (CPU-Spitzen, Speicher knapp, Hitze, Netzteil …)
@@ -19,7 +19,8 @@ import time
 from . import util
 from .settings import DATA_DIR
 
-DB_PATH = os.path.join(DATA_DIR, "flight.db")
+DB_PATH = os.path.join(DATA_DIR, "systemrecorder.db")
+OLD_DB_PATH = os.path.join(DATA_DIR, "flight.db")  # Name bis Version 2.3
 LOCK_PATH = os.path.join(DATA_DIR, "recorder.lock")
 PROC_EVERY = 5.0  # Sekunden zwischen Prozess-Schnappschüssen
 TOP_N = 10
@@ -46,18 +47,49 @@ SAMPLE_COLS = ["ts", "cpu", "mem", "swap", "disk_r", "disk_w", "disk_act", "net_
 RETENTIONS = [(_("1 Stunde"), 1), (_("6 Stunden"), 6), (_("24 Stunden"), 24), (_("3 Tage"), 72), (_("7 Tage"), 168)]
 
 
+def migrate_old_db():
+    """Aufzeichnung aus „flight.db“ (bis Version 2.3) übernehmen.
+
+    Nur aufrufen, solange dieser Prozess die Schreibsperre hält – dann schreibt
+    kein anderer Prozess in die alte Datei.
+    """
+    if os.path.exists(DB_PATH) or not os.path.exists(OLD_DB_PATH):
+        return
+    for suffix in ("", "-wal", "-shm"):
+        try:
+            os.rename(OLD_DB_PATH + suffix, DB_PATH + suffix)
+        except FileNotFoundError:
+            pass
+
+
+def db_path():
+    """Neue Datei, solange die alte noch nicht übernommen wurde notfalls die alte."""
+    if not os.path.exists(DB_PATH) and os.path.exists(OLD_DB_PATH):
+        return OLD_DB_PATH
+    return DB_PATH
+
+
 def connect():
     os.makedirs(DATA_DIR, exist_ok=True)
-    con = sqlite3.connect(DB_PATH, timeout=10)
-    con.execute("PRAGMA journal_mode=WAL")
-    con.execute("PRAGMA synchronous=NORMAL")
-    con.executescript(SCHEMA)
+    con = sqlite3.connect(db_path(), timeout=10)
+    # Beim ersten Öffnen (Umstellung auf WAL, Tabellen anlegen) kann ein zweiter Prozess
+    # oder Thread die Datei kurz sperren – dann kurz warten und erneut versuchen.
+    for attempt in range(50):
+        try:
+            con.execute("PRAGMA journal_mode=WAL")
+            con.execute("PRAGMA synchronous=NORMAL")
+            con.executescript(SCHEMA)
+            return con
+        except sqlite3.OperationalError as e:
+            if "locked" not in str(e) or attempt == 49:
+                raise
+            time.sleep(0.1)
     return con
 
 
 class _Writer(threading.Thread):
     def __init__(self):
-        super().__init__(daemon=True, name="flight-writer")
+        super().__init__(daemon=True, name="recorder-writer")
         self.q = queue.Queue()
 
     def run(self):
@@ -130,6 +162,7 @@ class Recorder:
         os.write(fd, f"{os.getpid()} {self.role}\n".encode())
         self._lock_fd = fd
         self.active = True
+        migrate_old_db()
         self._writer = _Writer()
         self._writer.start()
         self.event("info", "start", _("Aufzeichnung gestartet") +
@@ -373,7 +406,7 @@ class Reader:
         total = 0
         for suffix in ("", "-wal", "-shm"):
             try:
-                total += os.path.getsize(DB_PATH + suffix)
+                total += os.path.getsize(db_path() + suffix)
             except OSError:
                 pass
         return total
@@ -393,7 +426,7 @@ def run_daemon():
     settings = Settings()
     rec = Recorder(settings, role="daemon")
     if not rec.active:
-        print("Flight Recorder: Es zeichnet bereits ein anderer Prozess auf – warte im Hintergrund.")
+        print("Systemrekorder: Es zeichnet bereits ein anderer Prozess auf – warte im Hintergrund.")
     loop = GLib.MainLoop()
 
     def on_snap(snap):

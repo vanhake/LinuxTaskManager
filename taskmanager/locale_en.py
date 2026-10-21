@@ -74,7 +74,7 @@ EN = {
     "Übersicht": "Overview",
     "Prozesse": "Processes",
     "Leistung": "Performance",
-    "Flight Recorder": "Flight Recorder",
+    "Systemrekorder": "System Recorder",
     "CPU-Benchmark": "CPU Benchmark",
     "Speicherplatz": "Disk Space",
     "Verbindungen": "Connections",
@@ -96,7 +96,7 @@ EN = {
     "Jetzt aktualisieren (F5)": "Refresh now (F5)",
     "Neuen Task ausführen (Strg+N)": "Run new task (Ctrl+N)",
     "● REC": "● REC",
-    "Flight Recorder zeichnet auf – klicken zum Öffnen": "Flight Recorder is recording – click to open",
+    "Systemrekorder zeichnet auf – klicken zum Öffnen": "System Recorder is recording – click to open",
     "⏸ ANGEHALTEN": "⏸ PAUSED",
     "_Neuen Task ausführen…": "_Run new task…",
     "_Mini-Modus": "_Mini mode",
@@ -357,7 +357,7 @@ EN = {
     "Virtuell": "Virtual",
     "Grafikkarte ({0})": "Graphics card ({0})",
 
-    # ------------------------------------------------------------ Flight Recorder
+    # ------------------------------------------------------------ Systemrekorder
     "1 Stunde": "1 hour",
     "6 Stunden": "6 hours",
     "24 Stunden": "24 hours",

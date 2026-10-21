@@ -17,7 +17,7 @@ from .tabs.connections import ConnectionsTab
 from .recorder import Recorder
 from .tabs.benchmark import BenchmarkTab
 from .tabs.details import DetailsTab
-from .tabs.flight import FlightTab
+from .tabs.systemrecorder import SystemRecorderTab
 from .tabs.overview import OverviewTab
 from .tabs.performance import PerformanceTab
 from .tabs.processes import ProcessesTab
@@ -29,7 +29,7 @@ from .widgets import styled_label
 
 # per Umgebungsvariable änderbar (z. B. für Tests neben einer laufenden Instanz)
 APP_ID = os.environ.get("TASKMANAGER_APP_ID", "de.local.LinuxTaskmanager")
-VERSION = "2.3"
+VERSION = "2.4"
 SPEEDS = [(_("Hoch"), 0.5), (_("Normal"), 1.0), (_("Niedrig"), 4.0)]
 
 # (Name, Klasse, Titel, Symbol)
@@ -37,7 +37,7 @@ PAGES = [
     ("overview", OverviewTab, _("Übersicht"), "view-grid-symbolic"),
     ("processes", ProcessesTab, _("Prozesse"), "view-list-symbolic"),
     ("performance", PerformanceTab, _("Leistung"), "power-profile-performance-symbolic"),
-    ("flight", FlightTab, _("Flight Recorder"), "media-record-symbolic"),
+    ("sysrec", SystemRecorderTab, _("Systemrekorder"), "media-record-symbolic"),
     ("benchmark", BenchmarkTab, _("CPU-Benchmark"), "speedometer-symbolic"),
     ("storage", StorageTab, _("Speicherplatz"), "drive-harddisk-symbolic"),
     ("connections", ConnectionsTab, _("Verbindungen"), "network-transmit-receive-symbolic"),
@@ -127,8 +127,8 @@ class TaskManager(Gtk.Application):
         self.rec_chip = Gtk.Button(label=_("● REC"))
         self.rec_chip.set_relief(Gtk.ReliefStyle.NONE)
         self.rec_chip.get_style_context().add_class("tm-rec")
-        self.rec_chip.set_tooltip_text(_("Flight Recorder zeichnet auf – klicken zum Öffnen"))
-        self.rec_chip.connect("clicked", lambda *_xx: self.show_page("flight"))
+        self.rec_chip.set_tooltip_text(_("Systemrekorder zeichnet auf – klicken zum Öffnen"))
+        self.rec_chip.connect("clicked", lambda *_xx: self.show_page("sysrec"))
         self.rec_chip.set_no_show_all(True)
         hb.pack_start(self.rec_chip)
         self.paused_chip = styled_label(_("⏸ ANGEHALTEN"), "tm-chip")
@@ -192,7 +192,8 @@ class TaskManager(Gtk.Application):
         win.show_all()
 
         self.current_name = None
-        start = s["page"] if s["page"] in self.tabs else "overview"
+        page = {"flight": "sysrec"}.get(s["page"], s["page"])  # alter Seitenname
+        start = page if page in self.tabs else "overview"
         self.nav.select_row(self.nav_rows[start])
         self._update_paused()
         theme.on_change(self._on_theme_changed)

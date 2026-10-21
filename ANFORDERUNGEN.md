@@ -134,7 +134,7 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | T10 | 60-Hz-Aktualisierung wie TMOG | K | ❌ in Python zu teuer; Ringanzeigen werden aber flüssig animiert |
 | T11 | CPU-Benchmark | K | ✅ (Version 2.2, siehe unten) |
 
-## Flight Recorder (Version 2.1)
+## Systemrekorder (Version 2.1)
 
 | ID | Anforderung | Prio | Status |
 |----|-------------|------|--------|
@@ -145,7 +145,7 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | F5 | Zeiträume 5 min / 15 min / 1 h / 6 h / 24 h / Alles, LIVE-Modus | M | ✅ |
 | F6 | Abspielen mit 1×/10×/60×/300×, Schritt vor/zurück, Sprung zum vorigen/nächsten Ereignis | S | ✅ |
 | F7 | Zustand zum gewählten Zeitpunkt: alle Werte + Prozessliste + Ereignisliste (anklickbar) | M | ✅ |
-| F8 | Speicherung in SQLite (`~/.local/share/linux-taskmanager/flight.db`), Aufbewahrung 1 h – 7 Tage, Löschen, CSV-Export | S | ✅ |
+| F8 | Speicherung in SQLite (`~/.local/share/linux-taskmanager/systemrecorder.db`), Aufbewahrung 1 h – 7 Tage, Löschen, CSV-Export | S | ✅ |
 | F9 | Hintergrunddienst (`--recorder`) für Aufzeichnung ohne offenes Fenster, per Autostart zuschaltbar; nur ein Prozess schreibt (Dateisperre), die Oberfläche liest dann mit | S | ✅ |
 | F10 | Aufzeichnung pausierbar; REC-Anzeige in der Kopfleiste | K | ✅ |
 
@@ -160,7 +160,7 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | B5 | Live-Anzeige CPU-Auslastung, Temperatur, Takt; Max.-Temperatur, Takt unter Last, Drosselungserkennung, Stromversorgung | S | ✅ |
 | B6 | Belastungstest: Volllast auf allen Threads bis zum Stopp (Kühlung/Stabilität) | S | ✅ |
 | B7 | Ergebnisverlauf (gespeichert), Vergleich mit Bestwert, Löschen einzelner Läufe | S | ✅ |
-| B8 | Ereignisse im Flight Recorder (Benchmark/Belastungstest gestartet, Ergebnis) | K | ✅ |
+| B8 | Ereignisse im Systemrekorder (Benchmark/Belastungstest gestartet, Ergebnis) | K | ✅ |
 | B9 | Oberfläche bleibt während des Tests bedienbar (Arbeitsprozesse mit Nice 5) | M | ✅ |
 
 ## Sprache (Version 2.3)

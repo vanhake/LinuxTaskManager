@@ -1,4 +1,4 @@
-"""Seite „Flight Recorder“: aufgezeichnete Systemdaten zurückspulen und abspielen."""
+"""Seite „Systemrekorder“: aufgezeichnete Systemdaten zurückspulen und abspielen."""
 
 from ..i18n import _
 
@@ -302,8 +302,8 @@ class Timeline(Gtk.DrawingArea):
         return True
 
 
-class FlightTab(Tab):
-    title = _("Flight Recorder")
+class SystemRecorderTab(Tab):
+    title = _("Systemrekorder")
 
     def __init__(self, app):
         super().__init__(app)
@@ -320,7 +320,7 @@ class FlightTab(Tab):
 
         # Kopfzeile
         head = Gtk.Box(spacing=12)
-        head.pack_start(styled_label(_("Flight Recorder"), "tm-h1"), False, False, 0)
+        head.pack_start(styled_label(_("Systemrekorder"), "tm-h1"), False, False, 0)
         self.rec_chip = styled_label("", "tm-chip")
         head.pack_start(self.rec_chip, False, False, 0)
         self.rec_switch = Gtk.Switch(active=self.app.settings.get("fr_enabled", True))
@@ -554,7 +554,7 @@ class FlightTab(Tab):
             tl.data = self.reader.buckets(tl.t0, tl.t1, n)
             tl.events = self.reader.events(tl.t0, tl.t1)
         except Exception as e:  # z. B. Datenbank gesperrt
-            print("Flight Recorder:", e)
+            print("Systemrekorder:", e)
             return
         tl.n = n
         tl.queue_draw()
@@ -787,7 +787,7 @@ class FlightTab(Tab):
             os.makedirs(os.path.dirname(AUTOSTART), exist_ok=True)
             exe = os.path.join(PROJECT_DIR, "taskmanager.sh")
             with open(AUTOSTART, "w") as f:
-                f.write(_('[Desktop Entry]\nType=Application\nName=Taskmanager Flight Recorder\nComment=Zeichnet Systemdaten für den Flight Recorder im Hintergrund auf\nExec="{0}" --recorder\nIcon=media-record\nTerminal=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n').format(exe))
+                f.write(_('[Desktop Entry]\nType=Application\nName=Taskmanager Systemrekorder\nComment=Zeichnet Systemdaten für den Systemrekorder im Hintergrund auf\nExec="{0}" --recorder\nIcon=media-record\nTerminal=false\nNoDisplay=false\nX-GNOME-Autostart-enabled=true\nX-GNOME-Autostart-Delay=10\n').format(exe))
             # gleich starten – übernimmt die Aufzeichnung, sobald dieses Fenster geschlossen wird
             subprocess.Popen([sys.executable, "-m", "taskmanager", "--recorder"], cwd=PROJECT_DIR,
                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -822,7 +822,7 @@ class FlightTab(Tab):
     def _export(self):
         fc = Gtk.FileChooserNative.new(_("Zeitraum als CSV exportieren"), self.app.window,
                                        Gtk.FileChooserAction.SAVE, _("Exportieren"), None)
-        fc.set_current_name(time.strftime("flight-recorder-%Y%m%d-%H%M.csv"))
+        fc.set_current_name(time.strftime("systemrekorder-%Y%m%d-%H%M.csv"))
         fc.set_do_overwrite_confirmation(True)
         if fc.run() == Gtk.ResponseType.ACCEPT:
             try:

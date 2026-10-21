@@ -91,14 +91,14 @@ Dadurch bleiben Auswahl, Scrollposition und aufgeklappte Apps erhalten.
 
 Gemessene Eigenlast (Übersicht sichtbar, Normal): ca. 2 % Gesamt-CPU, 69 MB RAM.
 
-# Version 2.1 – Flight Recorder
+# Version 2.1 – Systemrekorder
 
 | Baustein | Datei | Umsetzung |
 |----------|-------|-----------|
 | Aufzeichnung | `recorder.py` → `Recorder` | erhält jeden Snapshot, schreibt über eine Queue in einen eigenen Writer-Thread (Commit alle 2 s, SQLite im WAL-Modus); Prozesse werden 5 s gemittelt; Ereigniserkennung mit Hysterese (einmal auslösen, erst nach Entspannung erneut) |
 | Sperre | `recorder.lock` + `flock` | genau ein Schreiber; andere Prozesse versuchen alle 30 s zu übernehmen (z. B. Dienst übernimmt, wenn das Fenster geschlossen wird) |
 | Lesen | `Reader` | Zeitraum wird in Abschnitte (≈ Pixelbreite/3) gruppiert, je Abschnitt der **Spitzenwert** (`MAX`), damit kurze Spitzen sichtbar bleiben; Lücken bleiben leer |
-| Oberfläche | `tabs/flight.py` | `Timeline`-Widget (Cairo), Abspiel-Timer (100 ms), Zustandskacheln, Prozess- und Ereignisliste |
+| Oberfläche | `tabs/systemrecorder.py` | `Timeline`-Widget (Cairo), Abspiel-Timer (100 ms), Zustandskacheln, Prozess- und Ereignisliste |
 | Dienst | `python3 -m taskmanager --recorder` | kopflos mit `GLib.MainLoop`, Messintervall 2 s, sauberes Beenden bei SIGTERM/SIGINT; Autostart-Datei `~/.config/autostart/linux-taskmanager-recorder.desktop` |
 
 Datenmenge: ca. 100 Byte je Messwert + 30 Prozesszeilen je 5 s → rund 15–25 MB pro Tag bei 1-s-Messung.
@@ -126,3 +126,11 @@ Ergebnis auf dem Entwicklungsrechner (Schnell): Single-Core 999, Multi-Core 1.94
 | Start | `__main__.py` setzt die Sprache **vor** dem Import der übrigen Module, weil viele Texte beim Import ausgewertet werden |
 | Wechsel | Einstellung speichern, sauber beenden, `os.execv` startet das Programm im selben Prozess neu |
 | Stolperfallen | `_` war vorher als Platzhaltervariable benutzt (`for x, _ in …`) und überdeckte die Übersetzungsfunktion → 97 Stellen umbenannt; `.desktop`-Namen werden über `X-GNOME-Gettext-Domain` immer in die Systemsprache übersetzt → im Englischen wird der Originalwert gelesen |
+
+# Version 2.4 – Umbenennung in „Systemrekorder“
+
+Die Aufzeichnungsfunktion heißt jetzt **Systemrekorder** (englisch *System Recorder*), um Verwechslungen mit
+der gleichnamigen Funktion anderer Programme zu vermeiden. Intern: Seite `sysrec`, Modul
+`tabs/systemrecorder.py`, Datenbank `systemrecorder.db`. Eine vorhandene `flight.db` wird beim ersten Start
+automatisch übernommen (sobald der Prozess die Schreibsperre hält); die alte Seiteneinstellung „flight“
+wird weiter erkannt.

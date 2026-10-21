@@ -15,7 +15,7 @@ if __name__ == "__main__":
     i18n.setup(Settings().get("language", "auto"))
 
     if "--recorder" in sys.argv:
-        # Kopfloser Flight-Recorder-Dienst ohne Fenster
+        # Kopfloser Systemrekorder-Dienst ohne Fenster
         from .recorder import run_daemon
         sys.exit(run_daemon())
 
