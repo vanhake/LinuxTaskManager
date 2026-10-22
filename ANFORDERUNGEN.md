@@ -181,3 +181,14 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | R2 | Download als einzelne, direkt ausführbare Datei (`.pyz`) ohne Installation | M | ✅ |
 | R3 | Programm läuft unabhängig vom Speicherort (Neustart beim Sprachwechsel, Hintergrund-Rekorder, Benchmark) | M | ✅ |
 | R4 | Build per Skript (`build.sh`) inkl. Prüfsummen; Veröffentlichung als GitHub-Release | S | ✅ |
+
+## Speicherplatz freigeben (Version 2.5)
+
+| ID | Anforderung | Prio | Status |
+|----|-------------|------|--------|
+| C1 | Temporäre Dateien löschen (eigene Dateien in /tmp, /var/tmp älter als 7 Tage; Miniaturansichten; Programm-Cache mit Auswahl je Ordner; Papierkorb) | M | ✅ |
+| C2 | Nicht mehr benötigte Pakete bereinigen (apt autoremove inkl. alter Kernel, APT-Cache, Systemprotokolle, ungenutzte Flatpak-Laufzeiten) | M | ✅ |
+| C3 | Lange nicht genutzte Programme anzeigen (Paket/Flatpak, Größe, „nicht benutzt seit mindestens …“) und deinstallieren | M | ✅ |
+| C4 | Abfrage von Administratorrechten (pkexec) für alle Schritte, die sie brauchen – ein Passwort für alle Schritte | M | ✅ |
+| C5 | Bestätigung vor jedem Löschen/Deinstallieren mit Zusammenfassung; Schutz von Systembestandteilen | M | ✅ |
+| C6 | Protokoll und Anzeige des tatsächlich freigegebenen Platzes | S | ✅ |

@@ -144,3 +144,13 @@ wird weiter erkannt.
 | `.pyz` | `python3 -m zipapp` mit eigenem `__main__.py` (Schutz für Benchmark-Prozesse, die „spawn“ das Archiv erneut laden lässt) |
 | `.deb` | `dpkg-deb --root-owner-group`: Paket unter `/usr/lib/linux-taskmanager`, Starter `/usr/bin/linux-taskmanager`, Desktop-Datei, Copyright (GPL-3+), Changelog; `postinst`/`prerm` erzeugen bzw. entfernen Bytecode; `lintian` ohne Fehler |
 | `build.sh` | baut beide Dateien und `SHA256SUMS` nach `dist/` |
+
+# Version 2.5 – Speicherplatz freigeben
+
+| Baustein | Umsetzung |
+|----------|-----------|
+| `cleanup.py` | Kategorien mit `scan()` / `clean()` (Benutzer) bzw. `root_commands()` (Root). Löschen folgt nie Symlinks; temporäre Dateien werden beim Löschen erneut auf Besitzer und Alter geprüft |
+| Root-Schritte | ein festes Skript aus geprüften Befehlen, ausgeführt mit `pkexec /bin/sh -c` → **eine** Passwortabfrage; jeder Schritt meldet seinen Exit-Code (`### rc=…`) |
+| Programme | sichtbare `.desktop`-Einträge → Paket über `dpkg -S`, Größe über `dpkg-query`; „zuletzt benutzt“ = Zugriffszeit (relatime) der eigentlichen Programmdatei (bei Skripten das Skript, nicht der Interpreter) bzw. Änderungszeit von `~/.var/app/<id>` bei Flatpaks. Die Angabe ist eine Untergrenze („mindestens so lange nicht gestartet“) |
+| Schutz | Systempakete (Essential/required/important, Desktop, Paketverwaltung …) nicht auswählbar; `apt-get -s remove` simuliert vorher – reißt die Entfernung `mint-meta-*`, Cinnamon, Nemo o. Ä. mit, wird sie blockiert; Paketnamen werden per Regex geprüft |
+| Tests | Löschen nur in einem Test-Ordner; Oberfläche mit automatisch abgebrochenen Bestätigungen und entschärften Root-Befehlen geprüft |

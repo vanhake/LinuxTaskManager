@@ -55,7 +55,9 @@ class CleanupWindow(Gtk.Window):
         super().__init__(title=_("Speicherplatz freigeben"), transient_for=app.window, modal=True)
         self.app = app
         self.get_style_context().add_class("tm-root")
-        self.set_default_size(940, 600)
+        work = app._workarea()
+        self.set_default_size(min(980, work.width - 40) if work else 980,
+                              min(660, work.height - 20) if work else 660)
         self.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
         self.busy = False
         self.cats = []
@@ -84,6 +86,8 @@ class CleanupWindow(Gtk.Window):
         lsw = scrolled(self.log)
         lsw.set_margin_start(0)
         lsw.set_margin_end(0)
+        # sonst beansprucht das (eingeklappte) Protokoll einen Teil der Fensterhöhe
+        lsw.set_vexpand(False)
         self.log_exp.add(lsw)
         outer.pack_start(self.log_exp, False, False, 0)
 
@@ -253,7 +257,8 @@ class CleanupWindow(Gtk.Window):
             warn += "\n\n" + _("Bitte vorher Browser und andere Programme schließen.")
         if root:
             warn += "\n\n" + _("Für einen Teil der Schritte werden Administratorrechte benötigt – das Passwort wird gleich abgefragt.")
-        if not actions.confirm(self, _("{0} freigeben?").format(util.size(total) + (" +" if unknown else "")),
+        title = (_("Mindestens {0} freigeben?") if unknown else _("{0} freigeben?")).format(util.size(total))
+        if not actions.confirm(self, title,
                                lines + warn, _("Bereinigen")):
             return
         before = free_space()
@@ -266,7 +271,8 @@ class CleanupWindow(Gtk.Window):
                 try:
                     n = c.clean()
                     freed += n
-                    GLib.idle_add(self._log, f"✓ {c.title}: {util.size(n)}")
+                    if not c.root:  # Root-Schritte werden nach dem Passwort-Teil protokolliert
+                        GLib.idle_add(self._log, f"✓ {c.title}: {util.size(n)}")
                 except Exception as e:
                     GLib.idle_add(self._log, f"✗ {c.title}: {e}")
             GLib.idle_add(after_user)

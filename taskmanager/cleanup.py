@@ -15,6 +15,7 @@ import time
 
 from gi.repository import Gio, GLib
 
+from . import i18n
 from .i18n import _
 
 TMP_DAYS = 7          # Dateien in /tmp, /var/tmp: älter als … Tage
@@ -493,7 +494,9 @@ def programs():
     for a in apps:
         fn = a.get_filename() or ""
         p = Program()
-        p.name = a.get_name()
+        # Englisch: Originalname (die Systemsprache würde den deutschen Namen liefern)
+        raw = a.get_string("Name") if i18n.is_en() else None
+        p.name = raw or a.get_name()
         p.icon = a.get_icon()
         p.desktop = fn
         p.protected = False

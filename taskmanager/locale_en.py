@@ -671,6 +671,7 @@ EN = {
         "Requires administrator rights – you will be asked for your password when cleaning up",
     "Ordner auswählen ({0})": "Choose folders ({0})",
     "{0} freigeben?": "Free up {0}?",
+    "Mindestens {0} freigeben?": "Free up at least {0}?",
     "Achtung: Der Papierkorb wird endgültig geleert.": "Warning: the trash will be emptied permanently.",
     "Bitte vorher Browser und andere Programme schließen.": "Please close your browser and other programs first.",
     "Für einen Teil der Schritte werden Administratorrechte benötigt – das Passwort wird gleich abgefragt.":

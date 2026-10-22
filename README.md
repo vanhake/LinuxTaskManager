@@ -40,7 +40,7 @@ Systemrekorder zum Zurückspulen, CPU-Benchmark, Festplattenanalyse und Mini-Mod
 | **Leistung** | Verlaufsgraphen für CPU (gesamt oder je logischem Prozessor), Arbeitsspeicher, jeden Datenträger, jeden Netzwerkadapter und die GPU – mit allen Kennzahlen |
 | **Systemrekorder** | Zeichnet laufend auf und lässt dich zurückspulen: Zeitleiste mit Ereignissen (CPU-Spitzen, RAM knapp, Hitze …), Abspielen, Zustand und Top-Prozesse zu jedem Zeitpunkt |
 | **CPU-Benchmark** | Single- und Multi-Core-Punktwerte aus 5 Testlasten, Live-Temperatur und -Takt, Drosselungserkennung, Belastungstest, Ergebnisverlauf |
-| **Speicherplatz** | Belegung aller Laufwerke; Ordneranalyse als Treemap zum Hineinklicken |
+| **Speicherplatz** | Belegung aller Laufwerke; Ordneranalyse als Treemap zum Hineinklicken; **Speicherplatz freigeben** (Caches, temporäre Dateien, alte Pakete, selten genutzte Programme) |
 | **Verbindungen** | Offene Netzwerkverbindungen je Prozess |
 | **App-Verlauf** | Kumulierte CPU-Zeit und Datenträger-E/A je Programm |
 | **Autostart** | Autostart-Einträge anzeigen, aktivieren/deaktivieren, hinzufügen, entfernen |
@@ -229,6 +229,28 @@ Stabilität zu prüfen.
    Rechtsklick → „Im Dateimanager zeigen“.
 
 Gezählt wird der tatsächlich belegte Platz; andere Partitionen/Netzlaufwerke werden nicht mitgezählt.
+
+### Speicherplatz freigeben
+
+Button **🧹 Speicherplatz freigeben** (Seite *Speicherplatz* oder Übersicht → *Festplattenbelegung*):
+
+**Bereinigen** – jede Position mit Größe zum An-/Abhaken:
+
+| Position | Passwort | Standard |
+|----------|----------|----------|
+| Miniaturansichten, temporäre Dateien (> 7 Tage, nur eigene) | – | angehakt |
+| Programm-Cache `~/.cache` (Unterordner einzeln wählbar) | – | aus |
+| Papierkorb (endgültig) | – | aus |
+| Paket-Cache (APT), nicht mehr benötigte Pakete inkl. alter Kernel | 🔒 | angehakt |
+| Systemprotokolle (älter als 14 Tage), ungenutzte Flatpak-Laufzeiten | 🔒 | aus |
+
+Vor dem Bereinigen erscheint eine Zusammenfassung; für die 🔒-Schritte wird **einmal** das
+Administrator-Passwort abgefragt (pkexec). Ergebnis und Ausgaben stehen im *Protokoll*.
+
+**Selten genutzte Programme** – installierte Programme (Paket und Flatpak) mit Größe und
+„nicht benutzt seit mindestens …“ (Filter 30/90/180/365 Tage). Anhaken → *Ausgewählte deinstallieren*.
+Vorher wird angezeigt, welche Pakete zusätzlich entfernt würden. Systembestandteile sind gesperrt;
+würde eine Deinstallation Teile des Desktops oder der Paketverwaltung mitreißen, wird sie verweigert.
 
 ---
 
