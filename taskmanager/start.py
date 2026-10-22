@@ -22,6 +22,14 @@ def main():
     gi.require_version("Gdk", "3.0")
     gi.require_version("PangoCairo", "1.0")
 
+    # Fensterklasse festlegen, BEVOR Gtk geladen wird: PyGObject initialisiert GTK schon beim
+    # Import und würde sonst „__main__.py“ als Klasse verwenden. Die Taskleiste ordnet das
+    # Fenster über diese Klasse (StartupWMClass=Taskmanager) dem Menüeintrag und Symbol zu.
+    from gi.repository import GLib
+    GLib.set_prgname("taskmanager")
+    from gi.repository import Gdk
+    Gdk.set_program_class("Taskmanager")
+
     # Sprache festlegen, bevor die übrigen Module (mit ihren Texten) geladen werden
     from . import i18n
     from .settings import Settings
