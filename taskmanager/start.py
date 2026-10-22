@@ -6,6 +6,7 @@ USAGE = """Linux Taskmanager
 
 Aufruf / usage:
   linux-taskmanager              Fenster öffnen / open window
+  linux-taskmanager --cleanup    „Speicherplatz freigeben“ öffnen / open "Free up disk space"
   linux-taskmanager --recorder   Systemrekorder ohne Fenster / system recorder without window
   linux-taskmanager --version    Version anzeigen / show version
 """

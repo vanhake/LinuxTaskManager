@@ -285,7 +285,7 @@ class Autoremove(Category):
     def root_commands(self):
         if not self.packages:
             return []
-        return ["DEBIAN_FRONTEND=noninteractive apt-get -y autoremove --purge"]
+        return ["DEBIAN_FRONTEND=noninteractive apt-get -y -o APT::Status-Fd=1 autoremove --purge"]
 
 
 class Journal(Category):
@@ -380,7 +380,7 @@ def remove_commands(debs, flatpaks):
     debs = [p for p in debs if PKG_RE.match(p)]
     flatpaks = [(a, inst) for a, inst in flatpaks if FLATPAK_RE.match(a) and inst in ("system", "user")]
     if debs:
-        cmds.append("DEBIAN_FRONTEND=noninteractive apt-get -y remove " + " ".join(debs))
+        cmds.append("DEBIAN_FRONTEND=noninteractive apt-get -y -o APT::Status-Fd=1 remove " + " ".join(debs))
     for app, inst in flatpaks:
         if inst == "system":
             cmds.append(f"flatpak uninstall --system -y --noninteractive {app}")

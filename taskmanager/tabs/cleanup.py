@@ -1,11 +1,12 @@
 """Fenster „Speicherplatz freigeben“: Bereinigen und selten genutzte Programme."""
 
 import os
+import re
 import threading
 import time
 
 import psutil
-from gi.repository import GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
+from gi.repository import Gdk, GdkPixbuf, Gio, GLib, GObject, Gtk, Pango
 
 from .. import actions, cleanup, icons, util
 from ..i18n import _
@@ -31,23 +32,44 @@ def free_space():
     return total
 
 
-def run_root(script, on_done):
-    """Skript mit Administratorrechten (pkexec → Passwortabfrage) ausführen."""
+def run_root(script, on_done, on_line=None, argv=None):
+    """Skript mit Administratorrechten (pkexec → Passwortabfrage) ausführen.
+
+    on_line(text) erhält jede Ausgabezeile sofort (Fortschritt/Live-Protokoll),
+    on_done(status, gesamte_ausgabe) am Ende. argv nur für Tests (ohne pkexec).
+    """
     try:
-        proc = Gio.Subprocess.new(["pkexec", "/bin/sh", "-c", script],
+        proc = Gio.Subprocess.new(argv or ["pkexec", "/bin/sh", "-c", script],
                                   Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_MERGE)
     except GLib.Error as e:
         on_done(-1, e.message)
         return
+    stream = Gio.DataInputStream.new(proc.get_stdout_pipe())
+    lines = []
 
-    def done(p, res):
+    def finished(p, res):
         try:
-            _ok, out, _err = p.communicate_utf8_finish(res)
-        except GLib.Error as e:
-            out = e.message
+            p.wait_finish(res)
+        except GLib.Error:
+            pass
         status = p.get_exit_status() if p.get_if_exited() else -1
-        on_done(status, out or "")
-    proc.communicate_utf8_async(None, None, done)
+        on_done(status, "\n".join(lines))
+
+    def got_line(st, res):
+        try:
+            data, _length = st.read_line_finish_utf8(res)
+        except GLib.Error:
+            data = None
+        if data is None:  # Ende der Ausgabe
+            proc.wait_async(None, finished)
+            return
+        data = data.rstrip("\r")
+        lines.append(data)
+        if on_line:
+            on_line(data)
+        st.read_line_async(GLib.PRIORITY_DEFAULT, None, got_line)
+
+    stream.read_line_async(GLib.PRIORITY_DEFAULT, None, got_line)
 
 
 class CleanupWindow(Gtk.Window):
@@ -78,18 +100,35 @@ class CleanupWindow(Gtk.Window):
         outer.pack_start(switcher, False, False, 0)
         self.stack.add_titled(self._build_clean_page(), "clean", _("Bereinigen"))
         self.stack.add_titled(self._build_programs_page(), "programs", _("Selten genutzte Programme"))
-        outer.pack_start(self.stack, True, True, 0)
 
-        self.log = Gtk.TextView(editable=False, monospace=True, wrap_mode=Gtk.WrapMode.WORD_CHAR)
-        self.log.set_size_request(-1, 120)
-        self.log_exp = Gtk.Expander(label=_("Protokoll"))
+        top = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        top.pack_start(self.stack, True, True, 0)
+        top.pack_start(self._build_progress(), False, False, 0)
+
+        # Protokoll unten, Trenner frei verschiebbar
+        logbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, margin_top=8)
+        lhead = Gtk.Box(spacing=8)
+        lhead.pack_start(styled_label(_("PROTOKOLL"), "tm-card-title"), False, False, 0)
+        lhead.pack_start(styled_label(_("Trennlinie ziehen, um das Protokoll zu vergrößern"), "tm-dim"),
+                         False, False, 0)
+        copy = Gtk.Button(label=_("Kopieren"))
+        copy.connect("clicked", lambda *_x: self._copy_log())
+        lhead.pack_end(copy, False, False, 0)
+        logbox.pack_start(lhead, False, False, 0)
+        self.log = Gtk.TextView(editable=False, monospace=True, wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                                left_margin=8, right_margin=8, top_margin=6, bottom_margin=6)
+        self._log_end = self.log.get_buffer().create_mark("ende", self.log.get_buffer().get_end_iter(), False)
         lsw = scrolled(self.log)
         lsw.set_margin_start(0)
         lsw.set_margin_end(0)
-        # sonst beansprucht das (eingeklappte) Protokoll einen Teil der Fensterhöhe
-        lsw.set_vexpand(False)
-        self.log_exp.add(lsw)
-        outer.pack_start(self.log_exp, False, False, 0)
+        logbox.pack_start(lsw, True, True, 0)
+
+        self.paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL, wide_handle=True)
+        self.paned.pack1(top, True, False)
+        self.paned.pack2(logbox, True, False)
+        self._paned_init = False
+        self.paned.connect("size-allocate", self._on_paned_alloc)
+        outer.pack_start(self.paned, True, True, 0)
 
         self.add(outer)
         self.show_all()
@@ -97,6 +136,126 @@ class CleanupWindow(Gtk.Window):
         self.scan_categories()
         self.programs_loaded = False
         self.stack.connect("notify::visible-child-name", self._on_page)
+
+    # ================================================================ Fortschritt
+    def _build_progress(self):
+        self.prog_rev = Gtk.Revealer(transition_type=Gtk.RevealerTransitionType.SLIDE_DOWN)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.get_style_context().add_class("tm-card")
+        line = Gtk.Box(spacing=10)
+        self.prog_spinner = Gtk.Spinner()
+        line.pack_start(self.prog_spinner, False, False, 0)
+        self.prog_step = styled_label("", "tm-mid", ellipsize=Pango.EllipsizeMode.END)
+        line.pack_start(self.prog_step, True, True, 0)
+        self.prog_time = styled_label("", "tm-dim tm-num", xalign=1)
+        line.pack_end(self.prog_time, False, False, 0)
+        box.pack_start(line, False, False, 0)
+        self.prog_bar = Gtk.ProgressBar(show_text=True)
+        box.pack_start(self.prog_bar, False, False, 0)
+        self.prog_detail = styled_label("", "tm-dim", ellipsize=Pango.EllipsizeMode.MIDDLE)
+        box.pack_start(self.prog_detail, False, False, 0)
+        self.prog_rev.add(box)
+        self._prog_timer = None
+        return self.prog_rev
+
+    def progress_start(self, total, title):
+        """Fortschrittsanzeige für `total` Schritte einblenden."""
+        self._prog_total = max(1, total)
+        self._prog_done = 0
+        self._prog_sub = 0.0
+        self._prog_known = False
+        self._prog_waiting = False
+        self._prog_t0 = time.monotonic()
+        self._prog_last_activity = time.monotonic()
+        set_text(self.prog_step, title)
+        set_text(self.prog_detail, "")
+        self.prog_bar.set_fraction(0)
+        self.prog_bar.set_text("0 %")
+        self.prog_spinner.start()
+        self.prog_rev.set_reveal_child(True)
+        self._show_log(big=True)
+        if self._prog_timer is None:
+            self._prog_timer = GLib.timeout_add(150, self._prog_tick)
+
+    def progress_step(self, index, title):
+        """Schritt `index` (0-basiert) beginnt."""
+        self._prog_done = index
+        self._prog_sub = 0.0
+        self._prog_known = False
+        self._prog_waiting = False
+        set_text(self.prog_step, _("Schritt {0} von {1}: {2}").format(index + 1, self._prog_total, title))
+        set_text(self.prog_detail, "")
+        self._prog_last_activity = time.monotonic()
+        self._prog_update()
+
+    def progress_sub(self, percent):
+        """Fortschritt innerhalb des aktuellen Schritts (0–100), z. B. von apt."""
+        self._prog_sub = max(0.0, min(1.0, percent / 100.0))
+        self._prog_known = True
+        self._prog_update()
+
+    def progress_detail(self, text):
+        self._prog_last_activity = time.monotonic()
+        set_text(self.prog_detail, text)
+
+    def progress_wait(self, text):
+        """Warten auf den Benutzer (Passwortabfrage) – Balken pulsiert."""
+        self._prog_waiting = True
+        set_text(self.prog_detail, text)
+
+    def progress_end(self):
+        if self._prog_timer is not None:
+            GLib.source_remove(self._prog_timer)
+            self._prog_timer = None
+        self.prog_spinner.stop()
+        self.prog_bar.set_fraction(1.0)
+        self.prog_bar.set_text("100 %")
+        GLib.timeout_add(1500, lambda: self.prog_rev.set_reveal_child(False) or False)
+
+    def _prog_update(self):
+        frac = (self._prog_done + self._prog_sub) / self._prog_total
+        self.prog_bar.set_fraction(frac)
+        self.prog_bar.set_text(util.pct(frac * 100))
+
+    def _prog_tick(self):
+        secs = int(time.monotonic() - self._prog_t0)
+        idle = int(time.monotonic() - self._prog_last_activity)
+        txt = _("läuft seit {0}").format(f"{secs // 60}:{secs % 60:02d}")
+        if idle >= 10:
+            txt += "  ·  " + _("letzte Ausgabe vor {0} s").format(idle)
+        set_text(self.prog_time, txt)
+        if self._prog_waiting:
+            # Warten auf die Passworteingabe: Balken pulsiert
+            self.prog_bar.set_pulse_step(0.04)
+            self.prog_bar.pulse()
+            self.prog_bar.set_text(_("wartet auf Passwort …"))
+        elif not self._prog_known:
+            # Schritt ohne Prozentangabe: Gesamtfortschritt halten, Spinner + Zeit zeigen Aktivität
+            frac = (self._prog_done + self._prog_sub) / self._prog_total
+            self.prog_bar.set_fraction(frac)
+            self.prog_bar.set_text(util.pct(frac * 100) + "  ·  " + _("arbeitet …"))
+        return True
+
+    def _on_root_line(self, line, titles):
+        """Live-Ausgabe des Root-Skripts auswerten (Schrittmarken, apt-Fortschritt)."""
+        if self._prog_waiting:  # sobald Ausgabe kommt, ist das Passwort eingegeben
+            set_text(self.clean_status, _("Wird bereinigt …"))
+        self._prog_waiting = False
+        m = re.match(r"^### (\d+)$", line)
+        if m:
+            i = int(m.group(1))
+            self.progress_step(self._root_offset + i, titles[i] if i < len(titles) else "")
+            return
+        m = re.match(r"^### rc=(\d+)$", line)
+        if m:
+            return
+        m = re.match(r"^(pmstatus|dlstatus):[^:]*:([\d.]+):(.*)$", line)
+        if m:  # maschinenlesbarer apt-Fortschritt
+            self.progress_sub(float(m.group(2)))
+            self.progress_detail(m.group(3))
+            return
+        self.progress_detail(line)
+        self._log(line)
 
     # ================================================================ Seite 1
     def _build_clean_page(self):
@@ -264,10 +423,15 @@ class CleanupWindow(Gtk.Window):
         before = free_space()
         self._set_busy(True, _("Wird bereinigt …"))
         self._log_clear()
+        user_cats = [c for c in cats if not c.root or c.key == "flatpak"]
+        root_titles = [c.title for c in cats for _cmd in c.root_commands()]
+        self._root_offset = len(user_cats)
+        self.progress_start(len(user_cats) + len(root_titles), _("Wird bereinigt …"))
 
         def user_work():
             freed = 0
-            for c in cats:
+            for i, c in enumerate(user_cats):
+                GLib.idle_add(self.progress_step, i, c.title)
                 try:
                     n = c.clean()
                     freed += n
@@ -287,21 +451,23 @@ class CleanupWindow(Gtk.Window):
                 finish()
                 return False
             set_text(self.clean_status, _("Warte auf Passwort …"))
+            self.progress_step(self._root_offset, titles[0])
+            self.progress_wait(_("Bitte das Administrator-Passwort eingeben …"))
 
             def root_done(status, output):
                 if status in (126, 127):
                     self._log(_("Abgebrochen – keine Administratorrechte erteilt."))
                 else:
-                    self._log(output.strip())
                     rcs = cleanup.step_results(output)
                     for i, t in enumerate(titles):
                         self._log(("✓ " if rcs.get(i) == 0 else "✗ ") + t)
                 finish()
-            run_root(cleanup.root_script(cmds), root_done)
+            run_root(cleanup.root_script(cmds), root_done, on_line=lambda l: self._on_root_line(l, titles))
             return False
 
         def finish():
             freed = max(0, free_space() - before)
+            self.progress_end()
             self._set_busy(False)
             self._update_free()
             msg = _("Fertig – {0} freigegeben.").format(util.size(freed))
@@ -504,14 +670,18 @@ class CleanupWindow(Gtk.Window):
         self.pspinner.start()
         self._log_clear()
         set_text(self.psel_label, _("Warte auf Passwort …"))
+        user_flats = [f for f in flats if f[1] == "user"]
+        cmds = cleanup.remove_commands(debs, flats)
+        titles = [_("Pakete deinstallieren") if c.startswith("DEBIAN_FRONTEND") else c.split()[-1] for c in cmds]
+        self._root_offset = len(user_flats)
+        self.progress_start(len(user_flats) + len(cmds), _("Wird deinstalliert …"))
 
         def finish(status, output):
             self.pspinner.stop()
+            self.progress_end()
             self._set_busy(False)
             if status in (126, 127):
                 self._log(_("Abgebrochen – keine Administratorrechte erteilt."))
-            else:
-                self._log(output.strip())
             freed = max(0, free_space() - before)
             msg = _("Deinstallation beendet – {0} freigegeben.").format(util.size(freed))
             self._log(msg)
@@ -522,13 +692,16 @@ class CleanupWindow(Gtk.Window):
             self.load_programs()
 
         def user_part():
-            cleanup.user_flatpak_remove(flats)
+            for i, f in enumerate(user_flats):
+                GLib.idle_add(self.progress_step, i, f[0])
+                cleanup.user_flatpak_remove([f])
             GLib.idle_add(root_part)
 
         def root_part():
-            cmds = cleanup.remove_commands(debs, flats)
             if cmds:
-                run_root(cleanup.root_script(cmds), finish)
+                self.progress_step(self._root_offset, titles[0])
+                self.progress_wait(_("Bitte das Administrator-Passwort eingeben …"))
+                run_root(cleanup.root_script(cmds), finish, on_line=lambda l: self._on_root_line(l, titles))
             else:
                 finish(0, "")
             return False
@@ -545,8 +718,24 @@ class CleanupWindow(Gtk.Window):
             return False
         buf = self.log.get_buffer()
         buf.insert(buf.get_end_iter(), text + "\n")
-        self.log_exp.set_expanded(True)
+        buf.move_mark(self._log_end, buf.get_end_iter())
+        self.log.scroll_mark_onscreen(self._log_end)  # immer die neueste Zeile zeigen
         return False
+
+    def _copy_log(self):
+        buf = self.log.get_buffer()
+        text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), False)
+        Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD).set_text(text, -1)
+
+    def _on_paned_alloc(self, paned, alloc):
+        if not self._paned_init and alloc.height > 200:
+            self._paned_init = True
+            paned.set_position(alloc.height - 150)  # anfangs: Protokoll klein (ca. 5 Zeilen)
+
+    def _show_log(self, big=False):
+        h = self.paned.get_allocated_height()
+        if big and h > 300 and self.paned.get_position() > h * 0.6:
+            self.paned.set_position(int(h * 0.5))
 
 
 def open_cleanup(app):

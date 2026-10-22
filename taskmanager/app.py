@@ -72,6 +72,8 @@ class TaskManager(Gtk.Application):
             return
         self._build_window()
         self.sampler.start()
+        if "--cleanup" in sys.argv:  # direkt „Speicherplatz freigeben“ öffnen
+            GLib.timeout_add(500, lambda: self.open_cleanup() and False)
 
     def do_shutdown(self):
         if self.window is not None:

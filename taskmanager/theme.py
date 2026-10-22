@@ -201,6 +201,9 @@ popover, popover.background {{
 popover checkbutton, popover label {{ color: @tm_text; }}
 .tm-root checkbutton {{ color: @tm_text; }}
 .tm-root paned > separator {{ background: @tm_border; min-width: 1px; }}
+.tm-root textview, .tm-root textview text {{ background-color: @tm_surface2; color: @tm_text; }}
+.tm-root textview text selection {{ background-color: alpha(@tm_accent, 0.35); }}
+.tm-root progressbar text {{ color: @tm_dim; font-size: 8.5pt; font-feature-settings: "tnum"; }}
 .tm-root progressbar trough {{ background: @tm_surface2; border-radius: 6px; min-height: 6px; }}
 .tm-root progressbar progress {{ background: @tm_accent; border-radius: 6px; min-height: 6px; }}
 .tm-root tooltip, tooltip {{ border-radius: 8px; }}
