@@ -102,7 +102,7 @@ sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-wnck-3.0 pyth
 ## Installation
 
 Fertige Dateien gibt es unter **[Releases](https://github.com/vanhake/LinuxTaskManager/releases/latest)**.
-Es gibt drei Wege – für die meisten ist **A** der einfachste.
+Es gibt mehrere Wege – für die meisten ist **A** der einfachste.
 
 ### A) Debian-Paket `.deb` (empfohlen)
 
@@ -138,6 +138,22 @@ einrichten (die Datei danach nicht mehr verschieben). Die Datei kann an einem be
 (z. B. `~/Programme`). Benötigt die auf Linux Mint
 vorinstallierten Pakete (siehe [Voraussetzungen](#voraussetzungen)).
 
+### B2) AppImage (ohne Installation)
+
+1. Unter *Releases* die Datei **`Taskmanager-<version>-x86_64.AppImage`** herunterladen.
+2. Ausführbar machen (Rechtsklick → *Eigenschaften* → *Zugriffsrechte* → **„Als Programm ausführen“**)
+   oder im Terminal:
+
+   ```bash
+   chmod +x Taskmanager-2.6.0-x86_64.AppImage
+   ```
+
+3. Doppelklick oder `./Taskmanager-2.6.0-x86_64.AppImage`
+
+Die AppImage ist schlank (ca. 1 MB) und nutzt Python und GTK des Systems – auf Linux Mint ist alles
+vorinstalliert. Hintergrund-Rekorder und Tastenkürzel zeigen auf die AppImage-Datei; sie sollte danach
+nicht mehr verschoben werden. Benötigt FUSE (auf Linux Mint vorhanden).
+
 ### C) Aus dem Quellcode
 
 ```bash
@@ -163,7 +179,13 @@ Menüeintrag und Befehl `taskmanager` für diese Variante anlegen – optional m
 ./build.sh
 ```
 
-Erzeugt `.deb`, `.pyz` und `SHA256SUMS` im Ordner `dist/`.
+Erzeugt `.deb`, `.pyz`, `.AppImage` und `SHA256SUMS` im Ordner `dist/`. Für die AppImage wird einmalig
+die offizielle Laufzeit benötigt:
+
+```bash
+mkdir -p tools && curl -fL -o tools/runtime-x86_64 \
+  https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64
+```
 
 ---
 
@@ -323,6 +345,7 @@ taskmanager/
 ├── app.py          Hauptfenster, Navigation, Menü
 ├── launcher.py     Startbefehle für Projektordner, .deb und .pyz
 ├── version.py      Programmversion
+├── assets/         Programmlogo (SVG)
 ├── sampler.py      Messung in Hintergrund-Thread (psutil, /proc, /sys)
 ├── recorder.py     Systemrekorder (SQLite, Ereigniserkennung, Hintergrunddienst)
 ├── benchmark.py    CPU-Benchmark und Belastungstest (multiprocessing)

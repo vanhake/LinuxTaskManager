@@ -2,6 +2,7 @@
 # Erstellt die Release-Dateien in dist/:
 #   linux-taskmanager_<version>_all.deb   – Paket für Linux Mint/Ubuntu/Debian (Doppelklick installiert)
 #   linux-taskmanager-<version>.pyz       – einzelne, direkt ausführbare Datei (ohne Installation)
+#   Taskmanager-<version>-x86_64.AppImage – AppImage (benötigt tools/runtime-x86_64, siehe unten)
 set -euo pipefail
 
 ROOT="$(dirname "$(readlink -f "$0")")"
@@ -18,7 +19,8 @@ mkdir -p "$DIST"
 
 copy_package() {   # $1 = Zielordner
     mkdir -p "$1"
-    (cd "$ROOT" && find taskmanager -name '*.py' -print0 | xargs -0 -I{} install -D -m 644 {} "$1/{}")
+    (cd "$ROOT" && find taskmanager \( -name '*.py' -o -name '*.svg' \) -not -path '*/__pycache__/*' -print0 \
+        | xargs -0 -I{} install -D -m 644 {} "$1/{}")
 }
 
 # ------------------------------------------------------------------ .pyz
@@ -57,12 +59,14 @@ GenericName[de]=Taskmanager
 Comment=Monitor processes, performance, startup apps, users and services
 Comment[de]=Prozesse, Leistung, Autostart, Benutzer und Dienste überwachen
 Exec=$PKG
-Icon=utilities-system-monitor
+Icon=$PKG
 Terminal=false
 Categories=System;Monitor;GTK;
 Keywords=task;manager;taskmanager;prozess;process;cpu;ram;speicher;memory;dienste;services;
 StartupWMClass=Taskmanager
 EOF
+
+install -D -m 644 "$ROOT/taskmanager/assets/$PKG.svg" "$DEB/usr/share/icons/hicolor/scalable/apps/$PKG.svg"
 
 install -d "$DEB/usr/share/doc/$PKG"
 cat > "$DEB/usr/share/doc/$PKG/copyright" <<EOF
@@ -123,6 +127,34 @@ find "$DEB" -type d -exec chmod 755 {} +
 find "$DEB" -type f -exec chmod 644 {} +
 chmod 755 "$DEB/DEBIAN/postinst" "$DEB/DEBIAN/prerm" "$DEB/usr/bin/$PKG"
 dpkg-deb --build --root-owner-group -Zxz "$DEB" "$DIST/${PKG}_${VERSION}_all.deb" >/dev/null
+
+# ------------------------------------------------------------------ .AppImage
+# Schlanke AppImage: nutzt Python/GTK des Systems (wie .deb/.pyz). Die offizielle Laufzeit
+# (https://github.com/AppImage/type2-runtime) muss einmalig nach tools/runtime-x86_64 geladen werden.
+RUNTIME="$ROOT/tools/runtime-x86_64"
+if [[ -f "$RUNTIME" ]] && command -v mksquashfs >/dev/null; then
+    APPDIR="$BUILD/AppDir"
+    copy_package "$APPDIR/usr/lib/$PKG"
+    printf '%s\n' '#!/bin/sh' \
+        'HERE="$(dirname "$(readlink -f "$0")")"' \
+        'exec env PYTHONPATH="$HERE/usr/lib/linux-taskmanager" python3 -m taskmanager "$@"' > "$APPDIR/AppRun"
+    chmod 755 "$APPDIR/AppRun"
+    sed -e "s|^Exec=.*|Exec=$PKG|" "$DEB/usr/share/applications/$PKG.desktop" > "$APPDIR/$PKG.desktop"
+    echo "X-AppImage-Version=$VERSION" >> "$APPDIR/$PKG.desktop"
+    install -m 644 "$ROOT/taskmanager/assets/$PKG.svg" "$APPDIR/$PKG.svg"
+    ln -s "$PKG.svg" "$APPDIR/.DirIcon"
+    install -D -m 644 "$APPDIR/$PKG.desktop" "$APPDIR/usr/share/applications/$PKG.desktop"
+    install -D -m 644 "$ROOT/taskmanager/assets/$PKG.svg" "$APPDIR/usr/share/icons/hicolor/scalable/apps/$PKG.svg"
+    find "$APPDIR" -type d -exec chmod 755 {} +
+    find "$APPDIR" -type f -exec chmod 644 {} +
+    chmod 755 "$APPDIR/AppRun"
+    mksquashfs "$APPDIR" "$BUILD/app.squashfs" -root-owned -noappend -comp zstd -Xcompression-level 19 -quiet >/dev/null
+    cat "$RUNTIME" "$BUILD/app.squashfs" > "$DIST/Taskmanager-$VERSION-x86_64.AppImage"
+    chmod 755 "$DIST/Taskmanager-$VERSION-x86_64.AppImage"
+else
+    echo "Hinweis: AppImage übersprungen – tools/runtime-x86_64 fehlt. Download:"
+    echo "  https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64"
+fi
 
 (cd "$DIST" && sha256sum ./* > SHA256SUMS)
 echo "Fertig:"

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Linux Taskmanager – App-Symbol (GPL-3.0-or-later, © 2026 vanhake) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#18213a"/>
+      <stop offset="1" stop-color="#090d18"/>
+    </linearGradient>
+    <linearGradient id="fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#00e5ff" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#00e5ff" stop-opacity="0.02"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Grundfläche -->
+  <rect x="12" y="12" width="232" height="232" rx="52" fill="url(#bg)"/>
+  <rect x="13.5" y="13.5" width="229" height="229" rx="50.5" fill="none" stroke="#00e5ff" stroke-opacity="0.55" stroke-width="3"/>
+  <!-- Raster -->
+  <g stroke="#00e5ff" stroke-opacity="0.12" stroke-width="2">
+    <line x1="44" y1="92" x2="212" y2="92"/>
+    <line x1="44" y1="132" x2="212" y2="132"/>
+    <line x1="44" y1="172" x2="212" y2="172"/>
+  </g>
+  <!-- Lastkurve mit Füllung -->
+  <path d="M44 178 L74 160 L96 168 L120 112 L142 138 L164 82 L186 120 L212 96 L212 206 L44 206 Z" fill="url(#fill)"/>
+  <path d="M44 178 L74 160 L96 168 L120 112 L142 138 L164 82 L186 120 L212 96"
+        fill="none" stroke="#00e5ff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- Speicher-Balken unten -->
+  <rect x="44" y="214" width="168" height="10" rx="5" fill="#233152"/>
+  <rect x="44" y="214" width="112" height="10" rx="5" fill="#ff2bd6"/>
+  <!-- Punkt am aktuellen Wert -->
+  <circle cx="212" cy="96" r="11" fill="#e8f1ff" filter="url(#glow)"/>
+</svg>

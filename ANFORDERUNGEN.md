@@ -192,3 +192,11 @@ modernes Neon-Design, Startseite mit Kurzübersicht, Festplattenbelegung.
 | C4 | Abfrage von Administratorrechten (pkexec) für alle Schritte, die sie brauchen – ein Passwort für alle Schritte | M | ✅ |
 | C5 | Bestätigung vor jedem Löschen/Deinstallieren mit Zusammenfassung; Schutz von Systembestandteilen | M | ✅ |
 | C6 | Protokoll und Anzeige des tatsächlich freigegebenen Platzes | S | ✅ |
+
+## AppImage und Logo (Version 2.6)
+
+| ID | Anforderung | Prio | Status |
+|----|-------------|------|--------|
+| R5 | Download als AppImage (ohne Installation, Doppelklick) | S | ✅ schlanke Variante, nutzt Python/GTK des Systems |
+| R6 | Eigenes Programmlogo, einheitlich in Menü, Taskleiste, Fenstern und Über-Dialog | S | ✅ |
+| R7 | Neustart, Hintergrund-Rekorder, Autostart und Tastenkürzel funktionieren auch aus der AppImage | M | ✅ (zeigen auf die .AppImage-Datei, nicht auf den temporären Einhängepunkt) |

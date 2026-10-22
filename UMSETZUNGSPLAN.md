@@ -154,3 +154,11 @@ wird weiter erkannt.
 | Programme | sichtbare `.desktop`-Einträge → Paket über `dpkg -S`, Größe über `dpkg-query`; „zuletzt benutzt“ = Zugriffszeit (relatime) der eigentlichen Programmdatei (bei Skripten das Skript, nicht der Interpreter) bzw. Änderungszeit von `~/.var/app/<id>` bei Flatpaks. Die Angabe ist eine Untergrenze („mindestens so lange nicht gestartet“) |
 | Schutz | Systempakete (Essential/required/important, Desktop, Paketverwaltung …) nicht auswählbar; `apt-get -s remove` simuliert vorher – reißt die Entfernung `mint-meta-*`, Cinnamon, Nemo o. Ä. mit, wird sie blockiert; Paketnamen werden per Regex geprüft |
 | Tests | Löschen nur in einem Test-Ordner; Oberfläche mit automatisch abgebrochenen Bestätigungen und entschärften Root-Befehlen geprüft |
+
+# Version 2.6 – AppImage und Logo
+
+| Baustein | Umsetzung |
+|----------|-----------|
+| AppImage | `build.sh`: AppDir (`AppRun`, `.desktop`, Logo, `.DirIcon`, Paket unter `usr/lib`) → `mksquashfs` (zstd) → vor die offizielle statische Laufzeit `type2-runtime` gehängt; Laufzeit liegt (nicht im Git) in `tools/` |
+| `launcher.appimage_path()` | erkennt die AppImage über `APPIMAGE`/`APPDIR`; Neustart, Hintergrunddienst, Autostart-`Exec` und Tastenkürzel verwenden die `.AppImage`-Datei, da der Einhängepunkt `/tmp/.mount_…` beim Beenden verschwindet |
+| Logo | `taskmanager/assets/linux-taskmanager.svg`; als Fenstersymbol in 7 Größen (über den Modul-Loader, daher auch aus der `.pyz`), im `.deb` unter `hicolor/scalable/apps`, im Über-Dialog |

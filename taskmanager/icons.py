@@ -94,6 +94,28 @@ def for_icon_string(icon):
     return _cache[key]
 
 
+def app_icons():
+    """Programmlogo in mehreren Größen (funktioniert auch innerhalb der .pyz-Datei)."""
+    from gi.repository import GdkPixbuf
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "linux-taskmanager.svg")
+    try:
+        # über den Modul-Loader: funktioniert im Ordner und innerhalb der .pyz (zipimport)
+        data = __loader__.get_data(path)
+    except (OSError, AttributeError):
+        return []
+    result = []
+    for size in (16, 24, 32, 48, 64, 128, 256):
+        loader = GdkPixbuf.PixbufLoader()
+        loader.set_size(size, size)
+        try:
+            loader.write(data)
+            loader.close()
+            result.append(loader.get_pixbuf())
+        except Exception:
+            continue
+    return result
+
+
 def for_gicon(gicon):
     """Symbol aus einem Gio.Icon (z. B. von Gio.AppInfo.get_icon())."""
     if gicon is None:

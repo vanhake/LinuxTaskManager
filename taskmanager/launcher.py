@@ -14,6 +14,18 @@ _PKG_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.dirname(_PKG_DIR)
 
 
+def appimage_path():
+    """Pfad der .AppImage-Datei, wenn das Programm aus einer AppImage läuft.
+
+    Die AppImage-Laufzeit setzt APPIMAGE (Datei) und APPDIR (temporärer Einhängepunkt).
+    Startbefehle müssen auf die Datei zeigen – der Einhängepunkt verschwindet beim Beenden.
+    """
+    image, appdir = os.environ.get("APPIMAGE"), os.environ.get("APPDIR")
+    if image and appdir and os.path.isfile(image) and _ROOT.startswith(appdir.rstrip("/") + "/"):
+        return image
+    return None
+
+
 def zipapp_path():
     """Pfad der .pyz-Datei, wenn das Programm aus einem Zip-Archiv läuft."""
     return _ROOT if os.path.isfile(_ROOT) else None
@@ -21,6 +33,9 @@ def zipapp_path():
 
 def argv(*extra):
     """Argumentliste zum Starten (für execv/subprocess); dazu env() verwenden."""
+    a = appimage_path()
+    if a:
+        return [a, *extra]
     z = zipapp_path()
     if z:
         return [sys.executable, z, *extra]
@@ -30,6 +45,8 @@ def argv(*extra):
 def env():
     """Umgebung, in der das Paket gefunden wird – ohne das Arbeitsverzeichnis zu ändern."""
     e = dict(os.environ)
+    if appimage_path():
+        return e
     if not zipapp_path():
         old = e.get("PYTHONPATH")
         e["PYTHONPATH"] = _ROOT + (os.pathsep + old if old else "")
@@ -47,8 +64,11 @@ def _quote(arg):
 
 def desktop_exec(*extra):
     """Exec-Zeile für .desktop-Dateien (z. B. Autostart des Hintergrunddienstes)."""
+    a = appimage_path()
     z = zipapp_path()
-    if z:
+    if a:
+        parts = [a, *extra]
+    elif z:
         parts = [sys.executable, z, *extra]
     else:
         parts = ["env", f"PYTHONPATH={_ROOT}", sys.executable, "-m", "taskmanager", *extra]

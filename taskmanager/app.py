@@ -6,7 +6,7 @@ import sys
 import psutil
 from gi.repository import Gdk, Gio, GLib, Gtk
 
-from . import actions, i18n, launcher, shortcut, sysinfo, theme, util
+from . import actions, i18n, icons, launcher, shortcut, sysinfo, theme, util
 from .i18n import _
 from .history import AppHistory
 from .mini import MiniWindow
@@ -90,7 +90,11 @@ class TaskManager(Gtk.Application):
         s = self.settings
         win = self.window = Gtk.ApplicationWindow(application=self, title=_("Taskmanager"))
         win.get_style_context().add_class("tm-root")
-        win.set_icon_name("utilities-system-monitor")
+        logo = icons.app_icons()
+        if logo:  # eigenes Logo für alle Fenster (Taskleiste, Alt+Tab, Mini-Modus)
+            Gtk.Window.set_default_icon_list(logo)
+        else:
+            win.set_icon_name("utilities-system-monitor")
         # Startgröße an den nutzbaren Bildschirmbereich anpassen (z. B. 1280×720)
         work = self._workarea()
         w = max(s["width"], 1100)
@@ -432,7 +436,11 @@ class TaskManager(Gtk.Application):
         d = Gtk.AboutDialog(transient_for=self.window, modal=True)
         d.set_program_name(_("Taskmanager für Linux"))
         d.set_version(VERSION)
-        d.set_logo_icon_name("utilities-system-monitor")
+        logo = icons.app_icons()
+        if logo:
+            d.set_logo(logo[-2])  # 128 px
+        else:
+            d.set_logo_icon_name("utilities-system-monitor")
         d.set_copyright(_("© 2026 vanhake"))
         d.set_license_type(Gtk.License.GPL_3_0)
         d.set_website("https://github.com/vanhake/LinuxTaskManager")
